@@ -13,13 +13,12 @@
 <div data-role="page" id="home">
 	<div data-role="header">
 		<a href="/mobile#about" data-rel="dialog" data-icon="info">About</a> 
-		<h1>twixmit - home</h1>
-		<a href="/mobile#options" data-icon="gear">Options</a> 
+		<h1>twixmit</h1>
 	</div><!-- /header -->
 
-	<div data-role="content">	
-        <img src="/static/noun_project_296_1.png" alt="logo" style="float:left; padding-right:5px;" />
-        <table height="72px">
+	<div data-role="content" style="text-align:center;">	
+        <img src="/static/noun_project_296_1.png" alt="logo" style="padding-right:5px;" />
+        <table height="72px" style="margin-left:auto;margin-right:auto;display:inline-table;">
             <tr><td>t</td><td>w</td><td>i</td><td>x</td><td>m</td><td>i</td><td>t</td></tr>
             <tr><td>_</td><td>_</td><td>_</td><td>^</td><td>_</td><td>_</td><td>^</td></tr>
         </table>
@@ -69,10 +68,8 @@
             <h3>Post New Update</h3>
             {%if not needs_twitter_auth %}
             <p id="save-results"></p>
-            <form action="#" method="post" id="post-form" data-ajax="false">
                 <textarea name="text-to-save" id="text-to-save" maxlength="140" placeholder="sample twitter post: I hope this gets posted on @twitter feed!"></textarea>
                 <button class="ui-btn-hidden" id="post">Post</button>
-            </form> 
             {% else %}
             <p>You need to sign into twitter in order to post.</p>            
             {% endif %}
@@ -86,18 +83,23 @@
             </li>
             
             <div data-role="collapsible">
+                <h3>Your Pending Posts</h3>
                 {%if needs_twitter_auth %}
                 <p>You need to sign into twitter in order to have posts and see them here.</p>            
                 {% else %}
-                <h3>Your Pending Posts</h3>
                 <ul data-role="listview" class="ui-listview" id="yours-pending">
                 </ul>
                 {% endif %}
             </div>
             
             <div data-role="collapsible">
-            <h3>Everyone's posts</h3>
-            <p>I'm the collapsible set content for section B.</p>
+            <h3>Everyones Posts</h3>
+            {%if needs_twitter_auth %}
+            <p>You need to sign into twitter in order to have posts and see them here.</p>            
+            {% else %}
+            <ul data-role="listview" class="ui-listview" id="theirs-pending">
+            </ul>
+            {% endif %}
             </div>
             
         </div>
@@ -106,7 +108,7 @@
 	</div><!-- /content -->
 
 	<div data-role="footer">
-	    <div data-role="controlgroup" data-type="horizontal">
+	    <div data-role="controlgroup" data-type="horizontal" style="text-align:center">
         <a href="/static/LICENSE.txt" data-role="button">LICENSE</a>
         <a href="/static/ATTRIBUTION.txt" data-role="button">ATTRIBUTION</a>
         <a href="mailto:twixmit@gmail.com" data-role="button">EMAIL</a>
@@ -125,20 +127,6 @@
     </div>
 </div>
 
-<div data-role="page" id="options" data-title="twixmit - options">
-    <div data-role="header">
-		<h1>twixmit - options</h1>
-		<a href="/mobile#about" data-rel="dialog" data-icon="info">About</a> 
-	</div><!-- /header -->
-    
-    <div data-role="content">	
-    <p>twixmit will switch your twitter posts with someone elses and theirs as well. How to play? Authorize this site to read your posts
-    and post updates on your behalf. The posted update on your timeline will be randomly selected and will be the post someone else submitted
-    that is also participating.</p>
-    <p>Posts are made once a day GMT time. Submit your post through this site to be used for mixing. See how things are mixed
-    and what gets posted where.</p>
-    </div>
-</div>
 <script type="text/javascript">
 $("#home").live("pageinit", function(e) {
     {%if not needs_twitter_auth %}

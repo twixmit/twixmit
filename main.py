@@ -304,11 +304,12 @@ class MainMobileHandler(MainHandler):
         self.response.out.write(template.render(_path, _template_values))
 
 def main():
-    application = webapp.WSGIApplication([('/', MainHandler),
+    application = webapp.WSGIApplication([('/', MainMobileHandler),
                                             ('/callback', CallbackHandler),
                                             ('/saveformix',SavePostForMixHandler),
                                             ('/getposts',GetPostsHandler),
-                                            ('/mobile', MainMobileHandler)],
+                                            #('/mobile', MainMobileHandler)
+                                            ],
                                          debug=True)
     util.run_wsgi_app(application)
 
