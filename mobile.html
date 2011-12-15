@@ -1,0 +1,86 @@
+<!DOCTYPE html> 
+<html> 
+	<head> 
+	<title>twixmit</title> 
+	<meta name="viewport" content="width=device-width, initial-scale=1"> 
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.css" />
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
+	<script type="text/javascript" src="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.js"></script>
+</head> 
+<body> 
+
+<div data-role="page" id="home">
+	<div data-role="header">
+		<a href="/mobile#about" data-rel="dialog" data-icon="info">About</a> 
+		<h1>twixmit - home</h1>
+		<a href="/mobile#options" data-icon="gear">Options</a> 
+	</div><!-- /header -->
+
+	<div data-role="content">	
+        <img src="/static/noun_project_296_1.png" alt="logo" style="float:left; padding-right:5px;" />
+        <table height="72px">
+            <tr><td>t</td><td>w</td><td>i</td><td>x</td><td>m</td><td>i</td><td>t</td></tr>
+            <tr><td>_</td><td>_</td><td>_</td><td>^</td><td>_</td><td>_</td><td>^</td></tr>
+        </table>
+        
+		
+        <div data-role="collapsible-set">
+        
+            <div data-role="collapsible" data-collapsed="false">
+            <h3>You Are</h3>
+            <p>Your google / twitter user information here.</p>
+            <p>Post boxt an form here.</p>
+            </div>
+            
+            <div data-role="collapsible">
+            <h3>Your Posts</h3>
+            <p>I'm the collapsible set content for section B.</p>
+            </div>
+            
+            <div data-role="collapsible">
+            <h3>Everyone's posts</h3>
+            <p>I'm the collapsible set content for section B.</p>
+            </div>
+            
+        </div>
+	
+
+	</div><!-- /content -->
+
+	<div data-role="footer">
+	    <div data-role="controlgroup" data-type="horizontal">
+        <a href="/static/LICENSE.txt" data-role="button">LICENSE</a>
+        <a href="/static/ATTRIBUTION.txt" data-role="button">ATTRIBUTION</a>
+        <a href="mailto:twixmit@gmail.com" data-role="button">EMAIL</a>
+        <a href="https://github.com/twixmit/twixmit" data-role="button">CODE</a>
+        </div>
+	</div><!-- /footer -->
+</div><!-- /page -->
+
+<div data-role="page" id="about" data-title="twixmit - about">
+    <div data-role="content">	
+    <p>twixmit will switch your twitter posts with someone elses and theirs as well. How to play? Authorize this site to read your posts
+    and post updates on your behalf. The posted update on your timeline will be randomly selected and will be the post someone else submitted
+    that is also participating.</p>
+    <p>Posts are made once a day GMT time. Submit your post through this site to be used for mixing. See how things are mixed
+    and what gets posted where.</p>
+    </div>
+</div>
+
+<div data-role="page" id="options" data-title="twixmit - options">
+    <div data-role="header">
+		<h1>twixmit - options</h1>
+		<a href="/mobile#about" data-rel="dialog" data-icon="info">About</a> 
+	</div><!-- /header -->
+    
+    <div data-role="content">	
+    <p>twixmit will switch your twitter posts with someone elses and theirs as well. How to play? Authorize this site to read your posts
+    and post updates on your behalf. The posted update on your timeline will be randomly selected and will be the post someone else submitted
+    that is also participating.</p>
+    <p>Posts are made once a day GMT time. Submit your post through this site to be used for mixing. See how things are mixed
+    and what gets posted where.</p>
+    </div>
+</div>
+
+</body>
+</html>

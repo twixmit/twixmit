@@ -289,13 +289,18 @@ class CallbackHandler(webapp.RequestHandler):
             #self.redirect("/")
     
     
-    
+class MainMobileHandler(webapp.RequestHandler):  
+    def get(self):
+        _template_values = {}
+        _path = os.path.join(os.path.dirname(__file__), 'mobile.html')
+        self.response.out.write(template.render(_path, _template_values))
 
 def main():
     application = webapp.WSGIApplication([('/', MainHandler),
                                             ('/callback', CallbackHandler),
                                             ('/saveformix',SavePostForMixHandler),
-                                            ('/getposts',GetPostsHandler)],
+                                            ('/getposts',GetPostsHandler),
+                                            ('/mobile', MainMobileHandler)],
                                          debug=True)
     util.run_wsgi_app(application)
 
