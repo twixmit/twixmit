@@ -27,9 +27,36 @@
         <div data-role="collapsible-set">
         
             <div data-role="collapsible" data-collapsed="false">
-            <h3>You Are</h3>
-            <p>Your google / twitter user information here.</p>
-            <p>Post boxt an form here.</p>
+            <h3>Account Information</h3>
+            {% if user %}
+                <ul data-role="listview" class="ui-listview">
+                    <li class="ui-li ui-li-static ui-body-c">
+                        <p class="ui-li-aside ui-li-desc"><a href="{{ logout_url }}">sign out</a></p>
+                        <h3 class="ui-li-heading">Google - {{ user.nickname }}</h3>
+                        <p class="ui-li-desc"><strong>You've been signed in as {{ user.nickname }}.</strong></p>
+                        <p class="ui-li-desc"><img src="/static/noun_project_efc6cb60-70b9-4263-bf0f-947913b1f483.png" /></p>
+                        
+                    </li>
+                    <li class="ui-li ui-li-static ui-body-c">
+                        {%if needs_twitter_auth %}
+                        <p class="ui-li-aside ui-li-desc"><a href="{{redirect_url}}">sign into twitter</a></p>
+                        <h3 class="ui-li-heading">You need to sign into Twitter!</h3>
+                        <p class="ui-li-desc"><strong>In order to post, you need to sign into twitter!</strong></p>
+                        <p class="ui-li-desc"><img src="/static/noun_project_554_1.png" /></p>
+                        
+                        {% else %}
+                         
+                        {% endif %} 
+                        
+                        
+                    </li>
+                </ul>
+            
+            {% else %}
+            <img src="/static/noun_project_554_1.png" />
+            <p>who are you? to play <a href="{{ login_url }}">sign into google!</a></p>
+            {%  endif %}
+            
             </div>
             
             <div data-role="collapsible">

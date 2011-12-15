@@ -159,7 +159,13 @@ class SavePostForMixHandler(webapp.RequestHandler):
             self.response.out.write( fail.get_json() )
 
 class MainHandler(webapp.RequestHandler):
+    
     def get(self):
+        _template_values = self.get_template_state_for_user()
+        _path = os.path.join(os.path.dirname(__file__), 'main.html')
+        self.response.out.write(template.render(_path, _template_values))
+    
+    def get_template_state_for_user(self):
         _template_values = {}
         user = users.get_current_user()
         
@@ -234,8 +240,10 @@ class MainHandler(webapp.RequestHandler):
         _template_values["user"] = user
         _template_values["user_model"] = user_model
         
-        _path = os.path.join(os.path.dirname(__file__), 'main.html')
-        self.response.out.write(template.render(_path, _template_values))
+        #_path = os.path.join(os.path.dirname(__file__), 'main.html')
+        #self.response.out.write(template.render(_path, _template_values))
+        
+        return _template_values
         
 class CallbackHandler(webapp.RequestHandler):
     def get(self):
@@ -289,10 +297,10 @@ class CallbackHandler(webapp.RequestHandler):
             #self.redirect("/")
     
     
-class MainMobileHandler(webapp.RequestHandler):  
+class MainMobileHandler(MainHandler):  
     def get(self):
-        _template_values = {}
         _path = os.path.join(os.path.dirname(__file__), 'mobile.html')
+        _template_values = self.get_template_state_for_user()
         self.response.out.write(template.render(_path, _template_values))
 
 def main():
