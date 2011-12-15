@@ -22,8 +22,10 @@ from google.appengine.api import memcache
 
 import social_keys
 import model
-import os,logging,json
+import os,logging
 import datetime,time
+
+from django.utils import simplejson as json
 
 from tweepy.auth import OAuthHandler
 from tweepy.auth import API
@@ -193,8 +195,8 @@ class MainHandler(webapp.RequestHandler):
                         logging.info(twitter_user)
                         _template_values["twitter_user"] = twitter_user
                         
-                    except TweepError as err:
-                        logging.error( "TweepError error %s: %s",err.reason,err.response)
+                    except TweepError:
+                        logging.error( "TweepError error has occured, clearing access tokents")
                         user_model.access_token_key = None
                         user_model.access_token_secret = None
                         user_model.put()
@@ -274,9 +276,9 @@ class CallbackHandler(webapp.RequestHandler):
                 memcache.add("twitter_user:%s" % user.user_id(), twitter_user, 60)
                 
                 self.response.out.write("twitter user name: %s\n" % twitter_user.screen_name)
-            except TweepError as err:
-                logging.error( "TweepError error %s: %s",err.reason,err.response)
-                self.response.out.write("TweepError: %s" % err.reason)
+            except TweepError:
+                logging.error( "TweepError error API is could not fetch me")
+                #self.response.out.write("TweepError: %s" % err.reason)
             
             logging.debug("user access tokens have been set")
             

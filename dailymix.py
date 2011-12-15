@@ -23,7 +23,7 @@ from google.appengine.ext import db
 
 import social_keys
 import model
-import os,logging,json
+import os,logging
 import datetime,time
 import random
 
