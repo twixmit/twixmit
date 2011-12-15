@@ -5,6 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1"> 
 	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.css" />
 	<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
+	<script type="text/javascript" src="/static/script.js"></script>
 	<script type="text/javascript" src="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.js"></script>
 </head> 
 <body> 
@@ -26,7 +27,7 @@
 		
         <div data-role="collapsible-set">
         
-            <div data-role="collapsible" data-collapsed="false">
+            <div data-role="collapsible" {%if needs_twitter_auth %}data-collapsed="false" {% endif %}>
             <h3>Account Information</h3>
             {% if user %}
                 <ul data-role="listview" class="ui-listview">
@@ -64,9 +65,30 @@
             
             </div>
             
+            <div data-role="collapsible" {%if not needs_twitter_auth %}data-collapsed="false" {% endif %}>
+            <h3>Post New Update</h3>
+            {%if not needs_twitter_auth %}
+            <p id="save-results"></p>
+            <form action="#" method="post" id="post-form">
+                <textarea name="textarea" id="text-to-save" maxlength="140" placeholder="sample twitter post: I hope this gets posted on @twitter feed!"></textarea>
+                <button class="ui-btn-hidden" id="post">Post</button>
+            </form> 
+            {% else %}
+            <p>You need to sign into twitter in order to post.</p>            
+            {% endif %}
+            
+            </div>
+            
+            <li class="ui-li ui-li-static ui-body-c" class="post-box" id="cloneme" style="display:none;">
+                <p class="ui-li-aside ui-li-desc time"></p>
+                <h3 class="ui-li-heading by"></h3>
+                <p class="ui-li-desc text"></p>
+            </li>
+            
             <div data-role="collapsible">
-            <h3>Your Posts</h3>
-            <p>I'm the collapsible set content for section B.</p>
+                <h3>Your Pending Posts</h3>
+                <ul data-role="listview" class="ui-listview" id="yours-pending">
+                </ul>
             </div>
             
             <div data-role="collapsible">
@@ -113,6 +135,13 @@
     and what gets posted where.</p>
     </div>
 </div>
-
+<script type="text/javascript">
+$(document).pageInit(function() {
+    {%if not needs_twitter_auth %}
+    twixmitMainReady();
+    {% endif %}
+});
+    
+</script>
 </body>
 </html>

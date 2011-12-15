@@ -7,6 +7,8 @@ function twixmitMainReady(){
     window.theirsPendingList = $("ul#theirs-pending");
     window.postBoxToClone = $("li#cloneme");
     
+    $("form#post-form").unbind("submit");
+    
     postButton.click(savePostForMix);
     
     loadYoursPending();
@@ -38,6 +40,10 @@ function loadPostsAll(which,cursorWindowKey,prependToList,noPostsText){
                     liDom.removeAttr("id");
                     liDom.prependTo(prependToList);
                     liDom.fadeIn('slow');
+                }
+                
+                if (prependToList.listView){
+                    prependToList.listview('refresh');
                 }
             } else {
                 
