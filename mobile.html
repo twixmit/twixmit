@@ -69,8 +69,8 @@
             <h3>Post New Update</h3>
             {%if not needs_twitter_auth %}
             <p id="save-results"></p>
-            <form action="#" method="post" id="post-form">
-                <textarea name="textarea" id="text-to-save" maxlength="140" placeholder="sample twitter post: I hope this gets posted on @twitter feed!"></textarea>
+            <form action="#" method="post" id="post-form" data-ajax="false">
+                <textarea name="text-to-save" id="text-to-save" maxlength="140" placeholder="sample twitter post: I hope this gets posted on @twitter feed!"></textarea>
                 <button class="ui-btn-hidden" id="post">Post</button>
             </form> 
             {% else %}
@@ -86,9 +86,13 @@
             </li>
             
             <div data-role="collapsible">
+                {%if needs_twitter_auth %}
+                <p>You need to sign into twitter in order to have posts and see them here.</p>            
+                {% else %}
                 <h3>Your Pending Posts</h3>
                 <ul data-role="listview" class="ui-listview" id="yours-pending">
                 </ul>
+                {% endif %}
             </div>
             
             <div data-role="collapsible">
@@ -136,7 +140,7 @@
     </div>
 </div>
 <script type="text/javascript">
-$(document).pageInit(function() {
+$(document).live("pageInit", function(e) {
     {%if not needs_twitter_auth %}
     twixmitMainReady();
     {% endif %}
