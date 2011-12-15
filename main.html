@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>twixmit (swap the x with the last t for twitmix)</title>
+<link rel="stylesheet" href="static/960.css">
+<link rel="stylesheet" type="text/css" href="static/style.css" />
+</head>
+<body>
+    <header>
+        <div class="container_12">
+            <div class="logo icon grid_3">
+                <img src="/static/noun_project_296_1.png" alt="logo" />
+            </div>
+            <div class="logo text grid_3">
+                <table>
+                    <tr><td>t</td><td>w</td><td>i</td><td>x</td><td>m</td><td>i</td><td>t</td></tr>
+                    <tr><td>_</td><td>_</td><td>_</td><td>^</td><td>_</td><td>_</td><td>^</td></tr>
+                </table>
+                <p>(swap the x with the last t for twitmix)</p>
+            </div>
+            <div class="about grid_6">
+                <p>twixmit will switch your twitter posts with someone elses and theirs as well. How to play? Authorize this site to read your posts
+                and post updates on your behalf. The posted update on your timeline will be randomly selected and will be the post someone else submitted
+                that is also participating.</p>
+                <p>Posts are made once a day GMT time. Submit your post through this site to be used for mixing. See how things are mixed
+                and what gets posted where.</p>
+            </div>
+        </div>
+    </header>
+    <section class="user">
+        <div class="container_16">
+            <div class="grid_2">&nbsp;</div>
+            {% if user %}
+                <div class="google grid_6">
+                    <img src="/static/noun_project_efc6cb60-70b9-4263-bf0f-947913b1f483.png" />
+                    <p class="youare">hello {{ user.nickname }}, <a href="{{ logout_url }}">sign out of google?</a></p>
+                </div>
+                
+                <div class="twitter grid_6">
+                {%if needs_twitter_auth %}
+                    <img src="/static/noun_project_554_1.png" />
+                    <span class="twitterneeded">
+                    you've not authorized twixmit to use your twitter account, 
+                    <a href="{{redirect_url}}">click here</a> to do so!</a>
+                    </span>
+                {% else %}
+                    <img class="twitterprofileimg" src="https://api.twitter.com/1/users/profile_image?screen_name={{twitter_user.screen_name}}&size=bigger" style="float:left;padding-right: 10px;" />
+                    <p class="twitterme">looks like you are &quot;{{twitter_user.screen_name }}&quot; on twitter!</p>
+                {% endif %}
+                </div>
+                
+            {% else %}
+                <div class="nobody grid_8">
+                <img src="/static/noun_project_554_1.png" />
+                <p>who are you? to play <a href="{{ login_url }}">sign into google!</a></p>
+                </div>
+            {% endif %}
+            <div class="grid_2">&nbsp;</div>
+        </div>
+    </section>
+    
+    {%if not needs_twitter_auth %}
+    
+    <section class="posting">
+        <div class="container_12">
+            <div class="grid_2">&nbsp;</div>
+            <div class="grid_8">
+                <span id="save-results"></span>
+                <textarea id="text-to-save" placeholder="sample twitter post: I hope this gets posted on @twitter feed!" style="width: inherit;" maxlength="140"></textarea>
+                <br />
+                <span style="float:right"><button type="button" id="post">Click Me!</button></span>
+            </div>
+            <div class="grid_2">&nbsp;</div>
+        </div>
+    </section>
+    
+    <section class="current-round">
+        <li class="post-box" id="cloneme" style="display:none;">
+            <div class="text"></div>
+            <div class="time"></div>
+            <div class="by"></div> 
+        </li>
+       <div class="container_16">
+           <div class="grid_4">
+                <h4>your pending posts to be submitted</h4>
+                <ul class="posts" id="yours-pending"></ul>
+           </div>
+           <div class="grid_4">
+                <h4>everyone's pending posts</h4>
+                <ul class="posts" id="theirs-pending"></ul>
+           </div>
+           <div class="grid_4">
+                <h4>posts posted to your feed by others</h4>
+                <h3>COMING SOON!</h3>
+                <ul class="posts" id="theirs-posted-toyou"></ul>
+           </div>
+           <div class="grid_4">
+                <h4>your posts posted to others</h4>
+                <h3>COMING SOON!</h3>
+                <ul class="posts" id="yours-posted-totheirs"></ul>
+           </div>
+       </div>
+    <section>
+    
+    {% endif %} 
+    
+    <footer>
+    </footer>
+    
+    <script type="text/javascript" src="/static/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="/static/script.js"></script>
+    <script type="text/javascript">
+    $(document).ready(function() {
+        {%if not needs_twitter_auth %}
+        twixmitMainReady();
+        {% endif %}
+    });
+    
+    </script>
+</body> 
+</html>
