@@ -39,15 +39,20 @@
                     </li>
                     <li class="ui-li ui-li-static ui-body-c">
                         {%if needs_twitter_auth %}
+                        
                         <p class="ui-li-aside ui-li-desc"><a href="{{redirect_url}}">sign into twitter</a></p>
                         <h3 class="ui-li-heading">You need to sign into Twitter!</h3>
                         <p class="ui-li-desc"><strong>In order to post, you need to sign into twitter!</strong></p>
                         <p class="ui-li-desc"><img src="/static/noun_project_554_1.png" /></p>
                         
                         {% else %}
-                         
-                        {% endif %} 
                         
+                        <p class="ui-li-aside ui-li-desc"></p>
+                        <h3 class="ui-li-heading">Twitter - @{{twitter_user.screen_name }}</h3>
+                        <p class="ui-li-desc"><strong>You've been signed in as {{twitter_user.screen_name }}.</strong></p>
+                        <p class="ui-li-desc"><img src="/static/noun_project_efc6cb60-70b9-4263-bf0f-947913b1f483.png" /></p>
+                        
+                        {% endif %} 
                         
                     </li>
                 </ul>
