@@ -66,16 +66,25 @@ class DailyMixHandler(webapp.RequestHandler):
         
         logging.info("list sized for users and posts are: %s" % len(user_list))
         
-        random.shuffle(user_list)
-        random.shuffle(post_list)
-        
         if len(user_list) < 2:
             status_text = "nobody wanted to play the twixmit today, not enough post for %s" % (day_filter)
+            logging.info(status_text)
             api.update_status(status=status_text,source="twixmit")
         
         else:
         
+            logging.info("starting user and post list shuffle")
+            random.shuffle(user_list)
+            random.shuffle(post_list)
+            
+            logging.info("done with user and post list shuffle")        
+            
+            logging.info("starting mix assignments")
+            
             for index in range(len(user_list)) :
+                
+                logging.info("next user index is %s"  % index)
+                
                 user = user_list[index]
                 post = post_list[index]
                 
@@ -85,10 +94,10 @@ class DailyMixHandler(webapp.RequestHandler):
                 mix_model = model.SocialPostMixesForUsers(origin_post=post,posted_to_user=user,posted_from_user=post.social_user,posted_to_twitter=False)
                 mix_model.put()
                 
-                #api.update_status(status=post.text,source="twixmit")
-                
                 status_text = "i just mixed the post from @%s to @%s" % (post.social_user.shortcut_social_username,user.shortcut_social_username)
                 api.update_status(status=status_text,source="twixmit")
+                
+            logging.info("done with mix assignments")
             
 
 def main():
