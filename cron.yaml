@@ -1,4 +1,4 @@
 cron:
 - description: daily mix job
   url: /tasks/dailymix/
-  schedule: every day 00:00
+  schedule: every day 00:01
