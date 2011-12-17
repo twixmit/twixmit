@@ -206,9 +206,12 @@ class SavePostForMixHandler(webapp.RequestHandler):
 class MainHandler(webapp.RequestHandler):
     
     def get(self):
-        _template_values = self.get_template_state_for_user()
-        _path = os.path.join(os.path.dirname(__file__), 'main.html')
-        self.response.out.write(template.render(_path, _template_values))
+        try:
+            _template_values = self.get_template_state_for_user()
+            _path = os.path.join(os.path.dirname(__file__), 'main.html')
+            self.response.out.write(template.render(_path, _template_values))
+        except CapabilityDisabledError:
+            self.redirect(URL_STATIC_ERROR_DEFAULT)
     
     def get_template_state_for_user(self):
         _template_values = {}
@@ -345,9 +348,12 @@ class CallbackHandler(webapp.RequestHandler):
     
 class MainMobileHandler(MainHandler):  
     def get(self):
-        _path = os.path.join(os.path.dirname(__file__), 'mobile.html')
-        _template_values = self.get_template_state_for_user()
-        self.response.out.write(template.render(_path, _template_values))
+        try:
+            _path = os.path.join(os.path.dirname(__file__), 'mobile.html')
+            _template_values = self.get_template_state_for_user()
+            self.response.out.write(template.render(_path, _template_values))
+        except CapabilityDisabledError:
+            self.redirect(URL_STATIC_ERROR_DEFAULT)
 
 def main():
     application = webapp.WSGIApplication([('/', MainMobileHandler),
