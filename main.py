@@ -24,6 +24,7 @@ import social_keys
 import model
 import os,logging
 import datetime,time
+import cache_keys
 
 from django.utils import simplejson as json
 
@@ -84,41 +85,76 @@ class GetPostsHandler(webapp.RequestHandler):
             
             _template_values = {}
             
-            dt = datetime.datetime.fromtimestamp(time.time())
-            day_start = datetime.datetime(dt.year, dt.month, dt.day, hour=0,minute=0)
-            day_stop = datetime.datetime(dt.year, dt.month, dt.day, hour=23,minute=59,second=59,microsecond=999999)
-    
-            _template_values["day_start"] = day_start
-            _template_values["day_stop"] = day_stop
-    
             get_which = self.request.get("which")
             get_since = self.request.get("since")
             
-            q = model.SocialPostsForUsers.all()
-            q.filter("day_created =",day_start)
+            if get_since == "": get_since = None
             
-            if not get_since == None:
-                q.with_cursor(get_since)
+            day_start = memcache.get(cache_keys.POSTS_DAY_START)
+            day_stop = memcache.get(cache_keys.POSTS_DAY_STOP)
             
-            if get_which == "yours-pending":               
-                q.filter("social_user =",user_model)
-                q.order("created")
-                results = q.fetch(100)
-                cursor = q.cursor()
+            if day_start == None or day_stop == None:
+                dt = datetime.datetime.fromtimestamp(time.time())
+                day_start = datetime.datetime(dt.year, dt.month, dt.day, hour=0,minute=0)
+                day_stop = datetime.datetime(dt.year, dt.month, dt.day, hour=23,minute=59,second=59,microsecond=999999)
                 
-                _template_values["c"] = cursor
-                _template_values["r"] = results
+                memcache.add(cache_keys.POSTS_DAY_START, day_start, 60)
+                memcache.add(cache_keys.POSTS_DAY_STOP, day_stop, 60)
                 
-            elif get_which == "theirs-pending":
-                q.order("created")
-                results = q.fetch(100)
-                cursor = q.cursor()
-                
-                _template_values["c"] = cursor
-                _template_values["r"] = results
+                logging.info("adding start and stop days to cached as: %s and %s" % (day_start,day_stop))
                 
             else:
-                pass
+                logging.info("start and stop days are cached as: %s and %s" % (day_start,day_stop))
+
+            _template_values["day_start"] = day_start
+            _template_values["day_stop"] = day_stop
+            
+            posts_results_cache_key = cache_keys.POST_RESULTS % (get_which,get_since,day_start.date())
+            
+            logging.info("post results cache key is: %s" % posts_results_cache_key)
+            cache_results = memcache.get(posts_results_cache_key)
+            
+            if not cache_results == None:
+                logging.info("cached search results being returned for key: %s" % posts_results_cache_key)
+                _template_values["c"] = get_since
+                _template_values["r"] = cache_results
+                
+            else:
+                logging.info("search results not found for cache key %s" % posts_results_cache_key)
+                
+                if get_which == "yours-pending": 
+                    
+                    q = model.SocialPostsForUsers.all()
+                    q.filter("day_created =",day_start)
+                    
+                    if not get_since == None: q.with_cursor(get_since)
+                    q.filter("social_user =",user_model)
+                    q.order("created")
+                    results = q.fetch(100)
+                    cursor = q.cursor()
+                    
+                    _template_values["c"] = cursor
+                    _template_values["r"] = results
+                    
+                elif get_which == "theirs-pending":
+                    q = model.SocialPostsForUsers.all()
+                    q.filter("day_created =",day_start)
+                    
+                    if not get_since == None: q.with_cursor(get_since)
+                    q.order("created")
+                    results = q.fetch(100)
+                    cursor = q.cursor()
+                    
+                    _template_values["c"] = cursor
+                    _template_values["r"] = results
+                    
+                else:
+                    logging.warning("unknown which was passed: %" % get_which)
+                    _template_values["c"] = None
+                    _template_values["r"] = None
+                    
+            if not _template_values["r"] == None:
+                memcache.add(posts_results_cache_key, _template_values["r"], 60)
 
             _path = os.path.join(os.path.dirname(__file__), 'posts.html') 
             self.response.headers["Content-Type"] = "application/json"
