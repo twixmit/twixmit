@@ -62,8 +62,8 @@ class DailyMixHandler(webapp.RequestHandler):
                 
                 status_text = "i just mixed the post from @%s to @%s" % (post.social_user.shortcut_social_username,user.shortcut_social_username)
                 logging.info(status_text)
+                
                 try:
-                    
                     
                     per_user_auth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
                     per_user_auth.set_access_token(user.access_token_key,user.access_token_secret)
