@@ -57,11 +57,12 @@ class DailyMixHandler(webapp.RequestHandler):
                 logging.info("next user to is: %s" % user.user_id)
                 logging.info("next post is: %s" % post.key())
                 
-                mix_model = model.SocialPostMixesForUsers(origin_post=post,posted_to_user=user,posted_from_user=post.social_user,posted_to_twitter=False)
-                mix_model.put()
+                
                 
                 status_text = "i just mixed the post from @%s to @%s" % (post.social_user.shortcut_social_username,user.shortcut_social_username)
                 logging.info(status_text)
+                
+                posted_to_twitter = True
                 
                 try:
                     
@@ -78,6 +79,10 @@ class DailyMixHandler(webapp.RequestHandler):
                     
                 except TweepError, e:
                     logging.error("TweepError: %s", e)
+                    posted_to_twitter = False
+                    
+                mix_model = model.SocialPostMixesForUsers(origin_post=post,posted_to_user=user,posted_from_user=post.social_user,posted_to_twitter=posted_to_twitter)
+                mix_model.put()
     
     def get(self): 
         
