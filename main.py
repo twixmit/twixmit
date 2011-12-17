@@ -19,6 +19,7 @@ from google.appengine.ext.webapp import util
 from google.appengine.api import users
 from google.appengine.ext.webapp import template
 from google.appengine.api import memcache
+from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 
 import social_keys
 import model
@@ -38,6 +39,11 @@ FAILURE_NO_USER_TEXT = "User is not setup"
 
 FAILURE_NO_TEXT_TO_SAVE_CODE = 2
 FAILURE_NO_TEXT_TO_SAVE_TEXT = "Text to save is not correct"
+
+FAILURE_CAPABILITY_DISABLED_CODE = 3
+FAILURE_CAPABILITY_DISABLED_TEXT = "Capability disabled error, try back later"
+
+URL_STATIC_ERROR_DEFAULT = "/static/default_error.html"
 
 
 class Util(object):
@@ -182,10 +188,13 @@ class SavePostForMixHandler(webapp.RequestHandler):
                 dt = datetime.datetime.fromtimestamp(time.time())
                 day_created = datetime.datetime(dt.year, dt.month, dt.day, hour=0,minute=0)
                 social_post = model.SocialPostsForUsers(social_user=user_model,text=text_to_save,day_created=day_created)
-                social_post.put()
                 
-                self.response.out.write(json.dumps( { "success" : True }) )
-                
+                try:
+                    social_post.put()
+                    self.response.out.write(json.dumps( { "success" : True }) )
+                except CapabilityDisabledError:
+                    fail = FailureJson(FAILURE_CAPABILITY_DISABLED_CODE,FAILURE_CAPABILITY_DISABLED_TEXT)
+                    self.response.out.write( fail.get_json() )
             else:
                 fail = FailureJson(FAILURE_NO_TEXT_TO_SAVE_CODE,FAILURE_NO_TEXT_TO_SAVE_TEXT)
                 self.response.out.write( fail.get_json() )
@@ -261,7 +270,7 @@ class MainHandler(webapp.RequestHandler):
             
         redirect_url = None
         if _template_values["needs_twitter_auth"] and not user_model == None:
-            auth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET,"http://twix-mit.appspot.com/callback")
+            auth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET,"http://%s/callback" % self.request.host)
             redirect_url = auth.get_authorization_url()
             
             user_model.request_token_key = auth.request_token.key
@@ -276,61 +285,62 @@ class MainHandler(webapp.RequestHandler):
         _template_values["user"] = user
         _template_values["user_model"] = user_model
         
-        #_path = os.path.join(os.path.dirname(__file__), 'main.html')
-        #self.response.out.write(template.render(_path, _template_values))
-        
         return _template_values
         
 class CallbackHandler(webapp.RequestHandler):
     def get(self):
         verifier = self.request.GET.get('oauth_verifier')
-        auth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
+        
         user = users.get_current_user()
         
         if not user: 
             logging.warning("current user is not logged in")
             self.redirect("/")
         
+        logging.info("running callback for user: %s" % user.user_id())
+        
         social_users = model.SocialKeysForUsers.all()
         social_users.filter("user_id =",user.user_id())
+        
         user_model = social_users.get()
         
-        #logging.info(user_model.usernickname)
-        
         if not user_model == None and user_model.request_token_key and user_model.request_token_secret:
-            auth.set_request_token(user_model.request_token_key, user_model.request_token_secret)
-            
-            auth.get_access_token(verifier)
-            
-            user_model.access_token_key = auth.access_token.key
-            user_model.access_token_secret = auth.access_token.secret
-            
-            api = API(auth)
-            api_is_working = api.test()
-            
-            user_model.shortcut_social_username = api.me().screen_name
-            
-            user_model.put()
-            
-            self.response.out.write("twitter api is working?: %s\n" % api_is_working)
-            
             try:
-                twitter_user = api.me()
+                auth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
+                auth.set_request_token(user_model.request_token_key, user_model.request_token_secret)
                 
-                memcache.add("twitter_user:%s" % user.user_id(), twitter_user, 60)
+                auth.get_access_token(verifier)
+                
+                user_model.access_token_key = auth.access_token.key
+                user_model.access_token_secret = auth.access_token.secret
+                
+                api = API(auth)
+                api_is_working = api.test()
+                
+                user_model.shortcut_social_username = api.me().screen_name
+                
+                user_model.put()
+                
+                self.response.out.write("twitter api is working?: %s\n" % api_is_working)
+            
+                memcache.add("twitter_user:%s" % user.user_id(), user_model.shortcut_social_username, 60)
                 
                 self.response.out.write("twitter user name: %s\n" % twitter_user.screen_name)
+                
+                logging.debug("user access tokens have been set")
+            
+                self.redirect("/")
+                
             except TweepError:
-                logging.error( "TweepError error API is could not fetch me")
-                #self.response.out.write("TweepError: %s" % err.reason)
-            
-            logging.debug("user access tokens have been set")
-            
-            self.redirect("/")
+                logging.error( "TweepError error API is could not fetch me: %s" % user.user_id())
+                self.redirect(URL_STATIC_ERROR_DEFAULT)
+            except CapabilityDisabledError:
+                logging.error( "Capability Disabled Error could not write for: %s" % user.user_id())
+                self.redirect(URL_STATIC_ERROR_DEFAULT)
         
         else: 
-            logging.warning("user model is not setup correctly: %s", user_model)
-            #self.redirect("/")
+            logging.warning("user model is not setup correctly: %s for user % "  % (user_model, user.user_id()))
+            self.redirect("/")
     
     
 class MainMobileHandler(MainHandler):  

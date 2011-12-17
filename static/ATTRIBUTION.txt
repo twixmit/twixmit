@@ -7,4 +7,11 @@ http://thenounproject.com/noun/check-mark/#icon-No835
 "No" symbol by Public Domain Mark 1.0, from The Noun, from thenounproject.com collection.
 http://thenounproject.com/noun/no/#icon-No558
 
+"Disapprove" symbol by The Noun Project, from thenounproject.com collection.
+http://thenounproject.com/noun/disapprove/#icon-No339
+
 "Tweepy" by  Joshua Roesslein, from https://github.com/tweepy/tweepy
+
+"jQuery Mobile" from http://jquerymobile.com
+
+

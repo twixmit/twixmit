@@ -17,6 +17,13 @@ handlers:
 
 - url: .*
   script: main.py
+
+# - url: /.*
+#    static_files: static/default_error.html
+#    upload: static/default_error.html
   
 inbound_services:
 - warmup
+
+error_handlers:
+  - file: default_error.html
