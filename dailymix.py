@@ -58,7 +58,6 @@ class DailyMixHandler(webapp.RequestHandler):
                 logging.info("next post is: %s" % post.key())
                 
                 
-                
                 status_text = "i just mixed the post from @%s to @%s" % (post.social_user.shortcut_social_username,user.shortcut_social_username)
                 logging.info(status_text)
                 

@@ -26,13 +26,13 @@ import model
 import os,logging
 import datetime,time
 import cache_keys
+import helpers
 
 from django.utils import simplejson as json
 
 from tweepy.auth import OAuthHandler
 from tweepy.auth import API
 from tweepy.error import TweepError
-
 
 FAILURE_NO_USER_CODE = 1
 FAILURE_NO_USER_TEXT = "User is not setup"
@@ -44,33 +44,6 @@ FAILURE_CAPABILITY_DISABLED_CODE = 3
 FAILURE_CAPABILITY_DISABLED_TEXT = "Capability disabled error, try back later"
 
 URL_STATIC_ERROR_DEFAULT = "/static/default_error.html"
-
-
-class Util(object):
-    
-    def is_user_good(self):
-        user = users.get_current_user()
-        if user:
-            social_users = model.SocialKeysForUsers.all()
-            social_users.filter("user_id =",user.user_id())
-            user_model = social_users.get()
-            
-            if user_model.access_token_key and user_model.access_token_secret:
-                return user_model
-            else:
-                return None
-        else:
-            return None
-            
-    def get_twitter_user(self,api,user):
-        twitter_user = memcache.get("twitter_user:%s" % user.user_id())
-                        
-        if twitter_user == None:
-            twitter_user = api.me()
-            memcache.add("twitter_user:%s" % user.user_id(), twitter_user, 60)
-        
-        return twitter_user
-    
 
 class FailureJson(object):
     def __init__(self,failure_key,failure_message):
@@ -84,7 +57,7 @@ class FailureJson(object):
 class GetPostsHandler(webapp.RequestHandler):
     def get(self): 
     
-        util = Util()
+        util = helpers.Util()
         user_model = util.is_user_good()
     
         if not user_model == None:
@@ -96,21 +69,8 @@ class GetPostsHandler(webapp.RequestHandler):
             
             if get_since == "": get_since = None
             
-            day_start = memcache.get(cache_keys.POSTS_DAY_START)
-            day_stop = memcache.get(cache_keys.POSTS_DAY_STOP)
-            
-            if day_start == None or day_stop == None:
-                dt = datetime.datetime.fromtimestamp(time.time())
-                day_start = datetime.datetime(dt.year, dt.month, dt.day, hour=0,minute=0)
-                day_stop = datetime.datetime(dt.year, dt.month, dt.day, hour=23,minute=59,second=59,microsecond=999999)
-                
-                memcache.add(cache_keys.POSTS_DAY_START, day_start, 60)
-                memcache.add(cache_keys.POSTS_DAY_STOP, day_stop, 60)
-                
-                logging.info("adding start and stop days to cached as: %s and %s" % (day_start,day_stop))
-                
-            else:
-                logging.info("start and stop days are cached as: %s and %s" % (day_start,day_stop))
+            day_start = util.get_todays_start()
+            day_stop = util.get_todays_stop()
 
             _template_values["day_start"] = day_start
             _template_values["day_stop"] = day_stop
@@ -176,7 +136,7 @@ class SavePostForMixHandler(webapp.RequestHandler):
         self.redirect("/")
     
     def post(self):
-        util = Util()
+        util = helpers.Util()
         user_model = util.is_user_good()
         
         self.response.headers["Content-Type"] = "application/json"
@@ -185,8 +145,8 @@ class SavePostForMixHandler(webapp.RequestHandler):
             text_to_save =self.request.get("text",  default_value=None)
             
             if not text_to_save == None and len(text_to_save) > 0 and len(text_to_save) < 140:
-                dt = datetime.datetime.fromtimestamp(time.time())
-                day_created = datetime.datetime(dt.year, dt.month, dt.day, hour=0,minute=0)
+                #dt = datetime.datetime.fromtimestamp(time.time())
+                day_created = util.get_todays_start() #datetime.datetime(dt.year, dt.month, dt.day, hour=0,minute=0)
                 social_post = model.SocialPostsForUsers(social_user=user_model,text=text_to_save,day_created=day_created)
                 
                 try:
@@ -288,6 +248,11 @@ class MainHandler(webapp.RequestHandler):
         _template_values["user"] = user
         _template_values["user_model"] = user_model
         
+        util = helpers.Util()
+        
+        _template_values["next_mix_run_time"] = util.get_next_mix_runtime()
+        _template_values["current_server_time"] = util.get_current_time_for_show()
+        
         return _template_values
         
 class CallbackHandler(webapp.RequestHandler):
@@ -324,11 +289,9 @@ class CallbackHandler(webapp.RequestHandler):
                 
                 user_model.put()
                 
-                self.response.out.write("twitter api is working?: %s\n" % api_is_working)
-            
                 memcache.add("twitter_user:%s" % user.user_id(), user_model.shortcut_social_username, 60)
                 
-                self.response.out.write("twitter user name: %s\n" % twitter_user.screen_name)
+                #self.response.out.write("twitter user name: %s\n" % user_model.shortcut_social_username)
                 
                 logging.debug("user access tokens have been set")
             
@@ -336,6 +299,11 @@ class CallbackHandler(webapp.RequestHandler):
                 
             except TweepError:
                 logging.error( "TweepError error API is could not fetch me: %s" % user.user_id())
+                
+                user_model.access_token_key = None
+                user_model.access_token_secret = None
+                user_model.put()
+                
                 self.redirect(URL_STATIC_ERROR_DEFAULT)
             except CapabilityDisabledError:
                 logging.error( "Capability Disabled Error could not write for: %s" % user.user_id())
