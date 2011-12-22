@@ -36,17 +36,26 @@ function loadPostsAll(which,cursorWindowKey,prependToList,noPostsText){
                 for( result in data.r){
                     
                     if (data.r[result].id && data.r[result].id != ""){
-                        var liDom = postBoxToClone.clone();
-                        liDom.children(".text").text(data.r[result].text);
-                        liDom.children(".time").text(data.r[result].created);
-                        liDom.children(".by").text("@" + data.r[result].by_user);
-                        liDom.children(".resubmit").text("resubmit? " + data.r[result].resubmit);
-                        liDom.removeAttr("id");
-                        liDom.prependTo(prependToList);
-                        liDom.fadeIn('slow');
+                        
+                        var exists = $("li#" + data.r[result].id);
+                        
+                        if (exists && exists.length == 0){
+                            var liDom = postBoxToClone.clone();
+                            liDom.children(".text").text(data.r[result].text);
+                            liDom.children(".time").text(data.r[result].created);
+                            liDom.children(".by").text("@" + data.r[result].by_user);
+                            liDom.children(".resubmit").text("resubmit? " + data.r[result].resubmit);
+                            liDom.attr("id",data.r[result].id)
+                            liDom.prependTo(prependToList);
+                            liDom.fadeIn('slow');
+                        } else {
+                            if( console && console.warn){
+                                console.warn("post already on page: %s",data.r[result].id )
+                            }
+                        }
                     } else {
-                        if( console && console.log){
-                            console.log("bad post result: %s",data.r[result])
+                        if( console && console.warn){
+                            console.warn("bad post result: %o",data.r[result])
                         }
                     }
                 }
