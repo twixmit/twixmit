@@ -88,28 +88,29 @@ class GetPostsHandler(webapp.RequestHandler):
             else:
                 logging.info("search results not found for cache key %s" % posts_results_cache_key)
                 
+                queries = helpers.Queries()
+                
                 if get_which == "yours-pending": 
                     
-                    q = model.SocialPostsForUsers.all()
-                    q.filter("day_created =",day_start)
-                    
-                    if not get_since == None: q.with_cursor(get_since)
-                    q.filter("social_user =",user_model)
-                    q.order("created")
+                    q = queries.get_posts_yours_pending(user_model,get_since,day_start)
                     results = q.fetch(100)
                     cursor = q.cursor()
+                    
+                    if get_since == None: 
+                        q2 = queries.get_posts_yours_resubmitted(user_model,day_start)
+                        results.append(q2.fetch(100) )
                     
                     _template_values["c"] = cursor
                     _template_values["r"] = results
                     
                 elif get_which == "theirs-pending":
-                    q = model.SocialPostsForUsers.all()
-                    q.filter("day_created =",day_start)
-                    
-                    if not get_since == None: q.with_cursor(get_since)
-                    q.order("created")
+                    q = queries.get_posts_theirs_pending(get_since,day_start)
                     results = q.fetch(100)
                     cursor = q.cursor()
+                    
+                    if get_since == None: 
+                        q2 = queries.get_posts_theirs_resubmitted(user_model,day_start)
+                        results.append(q2.fetch(100) )
                     
                     _template_values["c"] = cursor
                     _template_values["r"] = results

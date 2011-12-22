@@ -6,6 +6,45 @@ import model
 import datetime,time
 import cache_keys
 
+class Queries(object):
+
+    def get_posts_yours_pending(self,user_model,c,day):
+        q = model.SocialPostsForUsers.all()
+        q.filter("day_created =",day)
+                    
+        if not c == None: q.with_cursor(c)
+        q.filter("social_user =",user_model)
+        q.order("created")
+        
+        return q
+        
+    def get_posts_theirs_pending(self,c,day):
+        q = model.SocialPostsForUsers.all()
+        q.filter("day_created =",day)
+                    
+        if not c == None: q.with_cursor(c)
+        q.order("created")
+        
+        return q
+        
+    def get_posts_yours_resubmitted(self,user_model,day):
+        q = model.SocialPostsForUsers.all()
+        q.filter("day_created !=",day)            
+        q.filter("social_user =",user_model)
+        q.filter("resubmit =", True)
+        #q.order("created")
+        
+        return q
+        
+    def get_posts_theirs_resubmitted(self,user_model,day):
+        q = model.SocialPostsForUsers.all()
+        q.filter("day_created !=",day)
+        q.filter("resubmit =", True)
+        #q.order("created")
+        
+        return q                
+        
+
 class Util(object):
     
     def is_user_good(self):

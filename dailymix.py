@@ -82,6 +82,18 @@ class DailyMixHandler(webapp.RequestHandler):
                     
                 mix_model = model.SocialPostMixesForUsers(origin_post=post,posted_to_user=user,posted_from_user=post.social_user,posted_to_twitter=posted_to_twitter)
                 mix_model.put()
+                
+                if post.resubmit == True:
+                    post.day_created = move_to
+                    post.put()
+    
+    def move_small_posts_list(self,post_list,move_to):
+        
+        for post in post_list:
+            if post.resubmit == True:
+                post.day_create = move_to
+                post.put
+            
     
     def get(self): 
         
@@ -110,7 +122,6 @@ class DailyMixHandler(webapp.RequestHandler):
         
         q = model.SocialPostsForUsers.all()
         q.filter("day_created >=",day_filter)
-        q.filter(
         
         user_list = []
         post_list = []
@@ -133,6 +144,7 @@ class DailyMixHandler(webapp.RequestHandler):
         
         if counter < 2:
             status_text = "nobody wanted to play the twixmit today, not enough post for %s" % (day_filter)
+            self.move_small_posts_list(post_list,day_today)
         else:
             status_text = "there were %s many mix ups on %s" % (counter,day_filter)
             
@@ -142,10 +154,8 @@ class DailyMixHandler(webapp.RequestHandler):
         except TweepError, e:
             logging.error("TweepError: %s", e)
                 
-
-        
         logging.info("done with mix assignments")
-            
+
 
 def main():
     application = webapp.WSGIApplication([('/tasks/dailymix/', DailyMixHandler)], debug=True)

@@ -56,6 +56,17 @@ indexes:
 
 - kind: SocialPostsForUsers
   properties:
+  - name: resubmit
+  - name: day_created
+
+- kind: SocialPostsForUsers
+  properties:
+  - name: resubmit
+  - name: social_user
+  - name: day_created
+
+- kind: SocialPostsForUsers
+  properties:
   - name: social_user
   - name: created
     direction: desc

@@ -34,14 +34,21 @@ function loadPostsAll(which,cursorWindowKey,prependToList,noPostsText){
             
             if(data.r && data.r.length > 0){
                 for( result in data.r){
-                    var liDom = postBoxToClone.clone();
-                    liDom.children(".text").text(data.r[result].text);
-                    liDom.children(".time").text(data.r[result].created);
-                    liDom.children(".by").text("@" + data.r[result].by_user);
-                    liDom.children(".resubmit").text("resubmit? " + data.r[result].resubmit);
-                    liDom.removeAttr("id");
-                    liDom.prependTo(prependToList);
-                    liDom.fadeIn('slow');
+                    
+                    if (data.r[result].id && data.r[result].id != ""){
+                        var liDom = postBoxToClone.clone();
+                        liDom.children(".text").text(data.r[result].text);
+                        liDom.children(".time").text(data.r[result].created);
+                        liDom.children(".by").text("@" + data.r[result].by_user);
+                        liDom.children(".resubmit").text("resubmit? " + data.r[result].resubmit);
+                        liDom.removeAttr("id");
+                        liDom.prependTo(prependToList);
+                        liDom.fadeIn('slow');
+                    } else {
+                        if( console && console.log){
+                            console.log("bad post result: %s",data.r[result])
+                        }
+                    }
                 }
                 
                 if (prependToList.listView){
