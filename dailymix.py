@@ -33,7 +33,7 @@ from tweepy.error import TweepError
 
 class DailyMixHandler(webapp.RequestHandler):
     
-    def perform_mix(self,user_list,post_list,api):
+    def perform_mix(self,user_list,post_list,api,move_to):
     
         logging.info("list sized for users and posts are: %s" % len(user_list))
         
@@ -97,15 +97,20 @@ class DailyMixHandler(webapp.RequestHandler):
         
         one_day = datetime.timedelta(days=1)
         yesterday = dt - one_day
+        #tomorrow = dt + one_day
         
         logging.info("yesterday is: %s" % yesterday)
+        logging.info("today is: %s" % dt)
         
         day_filter = datetime.datetime(yesterday.year, yesterday.month, yesterday.day, hour=0,minute=0)
+        day_today = datetime.datetime(dt.year, dt.month, dt.day, hour=0,minute=0)
         
         logging.info("day filter point is: %s" % day_filter)
+        logging.info("tomorrow move to point is: %s" % day_today)
         
         q = model.SocialPostsForUsers.all()
-        q.filter("day_created =",day_filter)
+        q.filter("day_created >=",day_filter)
+        q.filter(
         
         user_list = []
         post_list = []
@@ -115,7 +120,7 @@ class DailyMixHandler(webapp.RequestHandler):
         for result in q.run(config=config):
             
             if counter % 1000 == 0:
-                self.perform_mix(user_list,post_list,api)
+                self.perform_mix(user_list,post_list,api,day_today)
                 user_list = []
                 post_list = []
                 
@@ -124,15 +129,19 @@ class DailyMixHandler(webapp.RequestHandler):
             
             counter = counter + 1
         
-        self.perform_mix(user_list,post_list,api)
+        self.perform_mix(user_list,post_list,api,day_today)
         
         if counter < 2:
             status_text = "nobody wanted to play the twixmit today, not enough post for %s" % (day_filter)
-            logging.info(status_text)
-            try:
-                api.update_status(status=status_text,source="twixmit")
-            except TweepError, e:
-                logging.error("TweepError: %s", e)
+        else:
+            status_text = "there were %s many mix ups on %s" % (counter,day_filter)
+            
+        logging.info(status_text)
+        try:
+            api.update_status(status=status_text,source="twixmit")
+        except TweepError, e:
+            logging.error("TweepError: %s", e)
+                
 
         
         logging.info("done with mix assignments")

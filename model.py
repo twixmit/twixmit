@@ -14,7 +14,9 @@ class SocialPostsForUsers(db.Model):
     social_user = db.ReferenceProperty(SocialKeysForUsers,collection_name='social_user',required=True)
     day_created = db.DateTimeProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
+    resubmit = db.BooleanProperty(required=True)
     text = db.StringProperty(required=True)
+    updated = db.DateTimeProperty(auto_now=True)
     
 class SocialPostMixesForUsers(db.Model):
     origin_post = db.ReferenceProperty(SocialPostsForUsers,collection_name='origin_post',required=True)
@@ -22,3 +24,4 @@ class SocialPostMixesForUsers(db.Model):
     posted_from_user = db.ReferenceProperty(SocialKeysForUsers,collection_name='posted_from_user',required=True)
     posted_to_twitter = db.BooleanProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
+    updated = db.DateTimeProperty(auto_now=True)

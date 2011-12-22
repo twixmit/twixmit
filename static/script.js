@@ -1,6 +1,7 @@
 function twixmitMainReady(){
     window.saveResultsDom = $("#save-results");
     window.textToSave = $("#text-to-save");
+    window.postResubmit = $("#checkbox-resubmit");
     window.postButton = $("button#post");
     
     window.yoursPendingList = $("ul#yours-pending");
@@ -31,12 +32,13 @@ function loadPostsAll(which,cursorWindowKey,prependToList,noPostsText){
                 window[cursorWindowKey] = data.c;
             }
             
-            if( data.r.length > 0){
+            if(data.r && data.r.length > 0){
                 for( result in data.r){
                     var liDom = postBoxToClone.clone();
                     liDom.children(".text").text(data.r[result].text);
                     liDom.children(".time").text(data.r[result].created);
-                    liDom.children(".by").text(data.r[result].by_user);
+                    liDom.children(".by").text("@" + data.r[result].by_user);
+                    liDom.children(".resubmit").text("resubmit? " + data.r[result].resubmit);
                     liDom.removeAttr("id");
                     liDom.prependTo(prependToList);
                     liDom.fadeIn('slow');
@@ -77,7 +79,7 @@ function loadTheirsPending(){
 function savePostForMix(e){
     var options = {
         dataType : "json",
-        data : {"text" : textToSave.val() },
+        data : {"text" : textToSave.val(), "resubmit" : window.postResubmit.prop("checked") },
         success : function(data, textStatus, jqXHR){
                 
             if (data && data.success == true){

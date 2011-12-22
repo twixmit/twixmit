@@ -81,6 +81,10 @@
             {%if not needs_twitter_auth %}
             <p id="save-results"></p>
                 <textarea name="text-to-save" id="text-to-save" maxlength="140" placeholder="sample twitter post: I hope this gets posted on @twitter feed!"></textarea>
+                <div data-role="fieldcontain" style="width:70%; ">
+                    <input type="checkbox" name="resubmit" id="checkbox-resubmit" class="custom" checked="true" />
+                    <label for="checkbox-resubmit">resubmit this post for later rounds</label>
+                </div>
                 <button class="ui-btn-hidden" id="post">Post</button>
             {% else %}
             <p>You need to sign into twitter in order to post.</p>            
@@ -89,9 +93,10 @@
             </div>
             
             <li class="ui-li ui-li-static ui-body-c" class="post-box" id="cloneme" style="display:none;">
-                <p class="ui-li-aside ui-li-desc time"></p>
+                <p class="ui-li-aside ui-li-desc time"></p> 
                 <h3 class="ui-li-heading by"></h3>
                 <p class="ui-li-desc text"></p>
+                <p class="ui-li-desc resubmit" style="font-size: 10px;padding-top:10px;"></p>
             </li>
             
             <div data-role="collapsible">

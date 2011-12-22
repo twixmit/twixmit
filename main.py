@@ -143,11 +143,12 @@ class SavePostForMixHandler(webapp.RequestHandler):
         
         if not user_model == None:
             text_to_save =self.request.get("text",  default_value=None)
+            resubmit_post = self.request.get("resubmit",default_value="true")   
+            resubmit_bool = resubmit_post.lower() in ("yes", "true", "t", "1")
             
             if not text_to_save == None and len(text_to_save) > 0 and len(text_to_save) < 140:
-                #dt = datetime.datetime.fromtimestamp(time.time())
-                day_created = util.get_todays_start() #datetime.datetime(dt.year, dt.month, dt.day, hour=0,minute=0)
-                social_post = model.SocialPostsForUsers(social_user=user_model,text=text_to_save,day_created=day_created)
+                day_created = util.get_todays_start()
+                social_post = model.SocialPostsForUsers(social_user=user_model,text=text_to_save,day_created=day_created,resubmit=resubmit_bool)
                 
                 try:
                     social_post.put()
