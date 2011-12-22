@@ -124,7 +124,11 @@ class GetPostsHandler(webapp.RequestHandler):
                 memcache.add(posts_results_cache_key, _template_values["r"], 60)
 
             _path = os.path.join(os.path.dirname(__file__), 'posts.html') 
+            
+            self.response.headers["Expires"] = util.get_expiration_stamp(60)
             self.response.headers["Content-Type"] = "application/json"
+            self.response.headers["Cache-Control: max-age"] = 60
+            self.response.headers["Cache-Control"] = "public"
             self.response.out.write(template.render(_path, _template_values))
             
         else:

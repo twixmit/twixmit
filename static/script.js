@@ -121,7 +121,8 @@ function savePostForMix(e){
         },
         complete: function(jqXHR, textStatus){
             postButton.removeAttr("disabled");
-        }
+        },
+        cache : true
     };
     
     $.ajax(options);

@@ -6,6 +6,15 @@ import model
 import datetime,time
 import cache_keys
 
+#http://groups.google.com/group/google-appengine-python/browse_thread/thread/c4e4c9417fb0a5fb
+class GMT(datetime.tzinfo):
+    def utcoffset(self, dt):
+        return datetime.timedelta(hours=10) # + self.dst(dt)
+    def tzname(self, dt):
+        return "GMT"
+    def dst(self, dt):
+        return datetime.timedelta(0) 
+
 class Queries(object):
 
     def get_posts_yours_pending(self,user_model,c,day):
@@ -46,6 +55,17 @@ class Queries(object):
         
 
 class Util(object):
+    
+    def get_expiration_stamp(self,seconds):
+        gmt = GMT() 
+        delta = datetime.timedelta(seconds=seconds)
+        expiration = self.get_current_time()
+        expiration = expiration.replace(tzinfo=gmt) 
+        expiration = expiration + delta
+        EXPIRATION_MASK = "%a, %d %b %Y %H:%M:%S %Z"
+        
+        return expiration.strftime(EXPIRATION_MASK)
+            
     
     def is_user_good(self):
         user = users.get_current_user()
