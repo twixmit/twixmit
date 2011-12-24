@@ -23,7 +23,7 @@ from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 
 import social_keys
 import model
-import os,logging
+import os,logging,re
 import datetime,time
 import cache_keys
 import helpers
@@ -157,6 +157,9 @@ class SavePostForMixHandler(webapp.RequestHandler):
             
             if not text_to_save == None and len(text_to_save) > 0 and len(text_to_save) < 140:
                 day_created = util.get_todays_start()
+                
+                text_to_save = re.sub("\s+"," ",text_to_save)
+                
                 social_post = model.SocialPostsForUsers(social_user=user_model,text=text_to_save,day_created=day_created,resubmit=resubmit_bool)
                 
                 try:
