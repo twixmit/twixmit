@@ -5,6 +5,7 @@ from google.appengine.api import users
 import model
 import datetime,time
 import cache_keys
+import logging
 
 #http://groups.google.com/group/google-appengine-python/browse_thread/thread/c4e4c9417fb0a5fb
 class GMT(datetime.tzinfo):
@@ -37,6 +38,7 @@ class Queries(object):
         return q
         
     def get_posts_yours_resubmitted(self,user_model,day):
+        logging.info("your posts resubmitted: %s, %s" % (user_model.user_id,day) )
         q = model.SocialPostsForUsers.all()
         q.filter("day_created !=",day)            
         q.filter("social_user =",user_model)
@@ -46,10 +48,10 @@ class Queries(object):
         return q
         
     def get_posts_theirs_resubmitted(self,user_model,day):
+        logging.info("their posts resubmitted: %s, %s" % (user_model.user_id,day) )
         q = model.SocialPostsForUsers.all()
         q.filter("day_created !=",day)
         q.filter("resubmit =", True)
-        #q.order("created")
         
         return q                
         

@@ -98,7 +98,9 @@ class GetPostsHandler(webapp.RequestHandler):
                     
                     if get_since == None: 
                         q2 = queries.get_posts_yours_resubmitted(user_model,day_start)
-                        results.append(q2.fetch(100) )
+                        results2 = q2.fetch(100)
+                        logging.info("yours resubmitted: %s" % len(results2) )
+                        results.extend(results2 )
                     
                     _template_values["c"] = cursor
                     _template_values["r"] = results
@@ -110,7 +112,9 @@ class GetPostsHandler(webapp.RequestHandler):
                     
                     if get_since == None: 
                         q2 = queries.get_posts_theirs_resubmitted(user_model,day_start)
-                        results.append(q2.fetch(100) )
+                        results2 = q2.fetch(100)
+                        logging.info("theirs resubmitted: %s" % len(results2) )
+                        results.extend( results2 )
                     
                     _template_values["c"] = cursor
                     _template_values["r"] = results
