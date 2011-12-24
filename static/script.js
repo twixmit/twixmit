@@ -41,7 +41,7 @@ function loadPostsAll(which,cursorWindowKey,prependToList,noPostsText){
                         
                         if (exists && exists.length == 0){
                             var liDom = postBoxToClone.clone();
-                            liDom.children(".text").text(data.r[result].text);
+                            liDom.children(".text").html(data.r[result].text);
                             liDom.children(".time").text(data.r[result].created);
                             liDom.children(".by").text("@" + data.r[result].by_user);
                             liDom.children(".resubmit").text("resubmit? " + data.r[result].resubmit);

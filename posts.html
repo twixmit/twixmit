@@ -4,6 +4,6 @@
     "created" : "{{ post.created }}",
     "by_user" : "{{post.social_user.shortcut_social_username}}",
     "resubmit" : "{{post.resubmit}}",
-    "text" : "{{ post.text }}" } {% if not forloop.last %},{% endif %}
+    "text" : "{{ post.text|escape}}" } {% if not forloop.last %},{% endif %}
 {% endfor %}
 ]}
