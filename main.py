@@ -93,12 +93,12 @@ class GetPostsHandler(webapp.RequestHandler):
                 if get_which == "yours-pending": 
                     
                     q = queries.get_posts_yours_pending(user_model,get_since,day_start)
-                    results = q.fetch(100)
+                    results = q.fetch(100, config= queries.get_db_run_config_eventual() )
                     cursor = q.cursor()
                     
                     if get_since == None: 
                         q2 = queries.get_posts_yours_resubmitted(user_model,day_start)
-                        results2 = q2.fetch(100)
+                        results2 = q2.fetch(100, config= queries.get_db_run_config_eventual())
                         logging.info("yours resubmitted: %s" % len(results2) )
                         results.extend(results2 )
                     
@@ -107,12 +107,12 @@ class GetPostsHandler(webapp.RequestHandler):
                     
                 elif get_which == "theirs-pending":
                     q = queries.get_posts_theirs_pending(get_since,day_start)
-                    results = q.fetch(100)
+                    results = q.fetch(100, config= queries.get_db_run_config_eventual())
                     cursor = q.cursor()
                     
                     if get_since == None: 
                         q2 = queries.get_posts_theirs_resubmitted(user_model,day_start)
-                        results2 = q2.fetch(100)
+                        results2 = q2.fetch(100, config= queries.get_db_run_config_eventual())
                         logging.info("theirs resubmitted: %s" % len(results2) )
                         results.extend( results2 )
                     

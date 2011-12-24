@@ -18,6 +18,9 @@ class GMT(datetime.tzinfo):
 
 class Queries(object):
 
+    def get_db_run_config_eventual(self):
+        return db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+
     def get_posts_yours_pending(self,user_model,c,day):
         q = model.SocialPostsForUsers.all()
         q.filter("day_created =",day)

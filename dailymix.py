@@ -26,6 +26,7 @@ import model
 import os,logging
 import datetime,time
 import random
+import helpers
 
 from tweepy.auth import OAuthHandler
 from tweepy.auth import API
@@ -126,9 +127,10 @@ class DailyMixHandler(webapp.RequestHandler):
         user_list = []
         post_list = []
         
-        config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+        queries = helpers.Queries()
+        
         counter = 0
-        for result in q.run(config=config):
+        for result in q.run(config= queries.get_db_run_config_eventual() ):
             
             if counter % 1000 == 0:
                 self.perform_mix(user_list,post_list,api,day_today)
