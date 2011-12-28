@@ -164,7 +164,8 @@ class SavePostForMixHandler(webapp.RequestHandler):
                 
                 try:
                     social_post.put()
-                    self.response.out.write(json.dumps( { "success" : True }) )
+                    
+                    self.response.out.write(json.dumps( { "success" : True, "id" : "%s" % social_post.key() }) )
                 except CapabilityDisabledError:
                     fail = FailureJson(FAILURE_CAPABILITY_DISABLED_CODE,FAILURE_CAPABILITY_DISABLED_TEXT)
                     self.response.out.write( fail.get_json() )

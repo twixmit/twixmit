@@ -13,14 +13,25 @@ function twixmitMainReady(){
     postButton.click(savePostForMix);
     
     loadYoursPending();
-    loadTheirsPending();
+    setTimeout("loadTheirsPending()",500);
     
     setupPostLoadTimers();
 }
 
 function setupPostLoadTimers(){
     setInterval("loadYoursPending()",30000);
-    setInterval("loadTheirsPending()",30000);
+    setInterval("loadTheirsPending()",30500);
+}
+
+function addPostToList(postBoxToClone, data_r_result, prependToList){
+    var liDom = postBoxToClone.clone();
+    liDom.children(".text").html(data_r_result.text);
+    liDom.children(".time").text(data_r_result.created);
+    liDom.children(".by").text("@" + data_r_result.by_user);
+    liDom.children(".resubmit").text("resubmit? " + data_r_result.resubmit);
+    liDom.attr("id",data_r_result.id)
+    liDom.prependTo(prependToList);
+    liDom.fadeIn('slow');
 }
 
 function loadPostsAll(which,cursorWindowKey,prependToList,noPostsText){
@@ -40,14 +51,7 @@ function loadPostsAll(which,cursorWindowKey,prependToList,noPostsText){
                         var exists = $("li#" + data.r[result].id);
                         
                         if (exists && exists.length == 0){
-                            var liDom = postBoxToClone.clone();
-                            liDom.children(".text").html(data.r[result].text);
-                            liDom.children(".time").text(data.r[result].created);
-                            liDom.children(".by").text("@" + data.r[result].by_user);
-                            liDom.children(".resubmit").text("resubmit? " + data.r[result].resubmit);
-                            liDom.attr("id",data.r[result].id)
-                            liDom.prependTo(prependToList);
-                            liDom.fadeIn('slow');
+                            addPostToList(postBoxToClone,data.r[result],prependToList);
                         } else {
                             if( console && console.warn){
                                 console.warn("post already on page: %s",data.r[result].id )
@@ -63,14 +67,13 @@ function loadPostsAll(which,cursorWindowKey,prependToList,noPostsText){
                 if (prependToList.listView){
                     prependToList.listview('refresh');
                 }
-            } else {
+            }
                 
-                if(prependToList.children().length == 0){
-                    var liDom = postBoxToClone.clone();
-                    liDom.children(".text").text(noPostsText);
-                    liDom.show();
-                    liDom.prependTo(prependToList);
-                }
+            if(prependToList.children().length == 0){
+                var liDom = postBoxToClone.clone();
+                liDom.children(".text").text(noPostsText);
+                liDom.show();
+                liDom.prependTo(prependToList);
             }
         },
         error : function(jqXHR, textStatus, errorThrown){
@@ -91,6 +94,10 @@ function loadYoursPending(){
 function loadTheirsPending(){
     loadPostsAll("theirs-pending","theirsPendingListCursor",theirsPendingList,"They have no pending posts, tell them to share something!");
 }   
+
+function formClientSideResultForListAdd(data){
+    // TODO
+}
     
 function savePostForMix(e){
     var options = {
@@ -102,6 +109,9 @@ function savePostForMix(e){
                 saveResultsDom.css("color","green").css("font-weight","bold");
                 saveResultsDom.text("Saved!");
                 textToSave.val("");
+                
+                formClientSideResultForListAdd(data);
+                
             } else if (data){
                 saveResultsDom.css("color","red").css("font-weight","bold");
                 saveResultsDom.text(data.failure_message);
