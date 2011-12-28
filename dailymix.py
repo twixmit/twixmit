@@ -34,6 +34,46 @@ from tweepy.error import TweepError
 
 class DailyMixHandler(webapp.RequestHandler):
     
+    def get_demo_posts(self,api):
+        statues = memcache.get("twixmit_friends_timeline")
+        if statues == None:
+            statues = api.friends_timeline()
+            memcache.add("twixmit_friends_timeline", statues, 60)
+        
+        user_list = []
+        post_list = []
+        
+        for status in statues:
+            status_text = status.text
+            status_user = status.user.screen_name
+            
+            combo = [status_text,status_user]
+            user_list.append(status_user)
+            post_list.append(combo)
+            
+        random.shuffle(user_list)
+        random.shuffle(post_list)
+        
+        for index in range(len(user_list)):
+            
+            combo = post_list[index]
+            to_user = user_list[index]
+            
+            whats_left_for_text = 140 - (6 + 6 + 6 + len(to_user) + len(combo[1]) )
+            
+            logging.info("whats left for text: %s" % whats_left_for_text)
+            
+            if (len(combo[0]) + whats_left_for_text) > 140:
+               trim_to = (len(combo[0]) + whats_left_for_text) - (140 + 3)
+               logging.info("trimming text to length: %s" % trim_to)
+               
+               combo[0] = "%s..." % combo[0][:trim_to]
+            
+            status = "from @%s \"%s\" to @%s" % (combo[1],combo[0],to_user)
+            
+            logging.info(status)
+        
+    
     def perform_mix(self,user_list,post_list,api,move_to):
     
         logging.info("list sized for users and posts are: %s" % len(user_list))
@@ -110,7 +150,6 @@ class DailyMixHandler(webapp.RequestHandler):
         
         one_day = datetime.timedelta(days=1)
         yesterday = dt - one_day
-        #tomorrow = dt + one_day
         
         logging.info("yesterday is: %s" % yesterday)
         logging.info("today is: %s" % dt)
@@ -147,6 +186,7 @@ class DailyMixHandler(webapp.RequestHandler):
         if counter < 2:
             status_text = "nobody wanted to play the twixmit today, not enough post for %s" % (day_filter)
             self.move_small_posts_list(post_list,day_today)
+            
         else:
             status_text = "there were %s many mix ups on %s" % (counter,day_filter)
             
@@ -155,7 +195,11 @@ class DailyMixHandler(webapp.RequestHandler):
             api.update_status(status=status_text,source="twixmit")
         except TweepError, e:
             logging.error("TweepError: %s", e)
-                
+        
+        if counter < 2:
+            logging.info("running demo mode of the mix")
+            self.get_demo_posts(api)
+        
         logging.info("done with mix assignments")
 
 
