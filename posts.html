@@ -1,4 +1,4 @@
-{   "c" : "{{ c }}", "day_stop" : "{{ day_stop }}", "day_start": "{{day_start}}", "r" : [
+{   "c" : "{{ c|escape }}", "day_stop" : "{{ day_stop }}", "day_start": "{{day_start}}", "r" : [
 {% for post in r %}
     {"id" : "{{ post.key }}",
     "created" : "{{ post.created }}",
