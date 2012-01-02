@@ -34,7 +34,7 @@ from tweepy.error import TweepError
 
 class DailyMixHandler(webapp.RequestHandler):
     
-    def get_demo_posts(self,api):
+    def perform_demo(self,api):
         statues = memcache.get("twixmit_friends_timeline")
         if statues == None:
             statues = api.friends_timeline()
@@ -47,7 +47,12 @@ class DailyMixHandler(webapp.RequestHandler):
             status_text = status.text
             status_user = status.user.screen_name
             
-            combo = [status_text,status_user]
+            details_link = "https://twitter.com/%s/status/%s" % (status_user,status.id_str)
+            
+            combo = [status_text,status_user,details_link]
+            
+            logging.info("details link: %s" % details_link)
+            
             user_list.append(status_user)
             post_list.append(combo)
             
@@ -59,19 +64,23 @@ class DailyMixHandler(webapp.RequestHandler):
             combo = post_list[index]
             to_user = user_list[index]
             
-            whats_left_for_text = 140 - (6 + 6 + 6 + len(to_user) + len(combo[1]) )
+            #whats_left_for_text = 140 - (10 + len(to_user) + len(combo[1]) )
+            #logging.info("whats left for text: %s" % whats_left_for_text)
             
-            logging.info("whats left for text: %s" % whats_left_for_text)
+            #if (len(combo[0]) + whats_left_for_text) > 140:
+            #   trim_to = (len(combo[0]) + whats_left_for_text) - (140 + 3)
+            #   logging.info("trimming text to length: %s" % trim_to)
+            #   
+            #   combo[0] = "%s..." % combo[0][:trim_to]
             
-            if (len(combo[0]) + whats_left_for_text) > 140:
-               trim_to = (len(combo[0]) + whats_left_for_text) - (140 + 3)
-               logging.info("trimming text to length: %s" % trim_to)
-               
-               combo[0] = "%s..." % combo[0][:trim_to]
-            
-            status = "from @%s \"%s\" to @%s" % (combo[1],combo[0],to_user)
+            status = "f: @%s %s t: @%s" % (combo[1],combo[2],to_user)
             
             logging.info(status)
+            
+            try:
+                api.update_status(status=status,source="twixmit")
+            except TweepError, e:
+                logging.error("TweepError: %s", e)
         
     
     def perform_mix(self,user_list,post_list,api,move_to):
@@ -163,42 +172,53 @@ class DailyMixHandler(webapp.RequestHandler):
         q = model.SocialPostsForUsers.all()
         q.filter("day_created >=",day_filter)
         
+        #TODO the resubmits aren't being pulled here an need to be
+        
         user_list = []
         post_list = []
         
         queries = helpers.Queries()
+        query_count = q.count(limit=10)
         
-        counter = 0
-        for result in q.run(config= queries.get_db_run_config_eventual() ):
-            
-            if counter % 1000 == 0:
-                self.perform_mix(user_list,post_list,api,day_today)
-                user_list = []
-                post_list = []
+        logging.info("query count limit check: %s" % query_count)
+        
+        if query_count > 10:
+        
+            counter = 0
+            for result in q.run(config= queries.get_db_run_config_eventual() ):
                 
-            user_list.append(result.social_user)
-            post_list.append(result)
+                if counter % 1000 == 0:
+                    self.perform_mix(user_list,post_list,api,day_today)
+                    user_list = []
+                    post_list = []
+                    
+                user_list.append(result.social_user)
+                post_list.append(result)
+                
+                counter = counter + 1
             
-            counter = counter + 1
-        
-        self.perform_mix(user_list,post_list,api,day_today)
-        
-        if counter < 2:
-            status_text = "nobody wanted to play the twixmit today, not enough post for %s" % (day_filter)
+            self.perform_mix(user_list,post_list,api,day_today)
+            
+            status_text = "there were %s mix ups on %s" % (counter,day_filter)    
+            logging.info(status_text)
+            
+            try:
+                api.update_status(status=status_text,source="twixmit")
+            except TweepError, e:
+                logging.error("TweepError: %s", e)
+                
+        else:
+            status_text = "nobody wanted to play the twixmit today, running demo for %s" % (day_filter)
+            
+            try:
+                api.update_status(status=status_text,source="twixmit")
+            except TweepError, e:
+                logging.error("TweepError: %s", e)
+                
             self.move_small_posts_list(post_list,day_today)
             
-        else:
-            status_text = "there were %s many mix ups on %s" % (counter,day_filter)
-            
-        logging.info(status_text)
-        try:
-            api.update_status(status=status_text,source="twixmit")
-        except TweepError, e:
-            logging.error("TweepError: %s", e)
-        
-        if counter < 2:
             logging.info("running demo mode of the mix")
-            self.get_demo_posts(api)
+            self.perform_demo(api)
         
         logging.info("done with mix assignments")
 
