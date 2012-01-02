@@ -9,6 +9,7 @@ handlers:
 - url: /tasks/dailymix/.*
   script: dailymix.py
   login: admin
+  secure: optional
 
 - url: /favicon\.ico
   static_files: static/noun_project_296_1.png
@@ -20,6 +21,7 @@ handlers:
 
 - url: .*
   script: main.py
+  secure: optional
 
 # - url: /.*
 #    static_files: static/default_error.html

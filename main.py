@@ -247,7 +247,7 @@ class MainHandler(webapp.RequestHandler):
             
         redirect_url = None
         if _template_values["needs_twitter_auth"] and not user_model == None:
-            auth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET,"http://%s/callback" % self.request.host)
+            auth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET,"https://%s/callback" % self.request.host)
             redirect_url = auth.get_authorization_url()
             
             user_model.request_token_key = auth.request_token.key
