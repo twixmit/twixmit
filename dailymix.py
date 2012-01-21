@@ -59,6 +59,8 @@ class DailyMixHandler(webapp.RequestHandler):
         random.shuffle(user_list)
         random.shuffle(post_list)
         
+        self.delete_existing_demo_posts()
+        
         for index in range(len(user_list)):
             
             combo = post_list[index]
@@ -78,6 +80,15 @@ class DailyMixHandler(webapp.RequestHandler):
             
             logging.info("demo mix put id reference: %s" % mix_model.key() )
         
+    
+    def delete_existing_demo_posts(self):
+        queries = helpers.Queries()
+        q = queries.get_posts_demo()
+        results = q.fetch(1000, config=queries.get_db_run_config_eventual() )
+        
+        for r in results:
+            logging.info("deleting demo entity: %s" % r.key)
+            r.delete()
     
     def perform_mix(self,user_list,post_list,api,move_to):
     
