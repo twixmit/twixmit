@@ -16,6 +16,8 @@ function twixmitMainReady(){
     setTimeout("loadTheirsPending()",500);
     
     setupPostLoadTimers();
+    
+    loadDemoPostsAll();
 }
 
 function setupPostLoadTimers(){
@@ -80,6 +82,58 @@ function loadPostsAll(which,cursorWindowKey,prependToList,noPostsText){
             console.error(errorThrown);                  
         },
         url : "/getposts",
+        type : "get"
+    };
+    
+    $.ajax(options);
+
+}
+
+function loadDemoPostsAll(){
+    var options = {
+        dataType : "json",
+        data : {},
+        success : function(data, textStatus, jqXHR){
+        
+            /*if(data.r && data.r.length > 0){
+                for( result in data.r){
+                    
+                    if (data.r[result].id && data.r[result].id != ""){
+                        
+                        var exists = $("li#" + data.r[result].id);
+                        
+                        if (exists && exists.length == 0){
+                            addPostToList(postBoxToClone,data.r[result],prependToList);
+                        } else {
+                            if( console && console.warn){
+                                console.warn("post already on page: %s",data.r[result].id )
+                            }
+                        }
+                    } else {
+                        if( console && console.warn){
+                            console.warn("bad post result: %o",data.r[result])
+                        }
+                    }
+                }
+                
+                if (prependToList.listView){
+                    prependToList.listview('refresh');
+                }
+            }
+                
+            if(prependToList.children().length == 0){
+                var liDom = postBoxToClone.clone();
+                liDom.children(".text").text(noPostsText);
+                liDom.show();
+                liDom.prependTo(prependToList);
+            }*/
+        },
+        error : function(jqXHR, textStatus, errorThrown){
+            if (console && console.error){
+                console.error(errorThrown);                  
+            }
+        },
+        url : "/getdemoposts",
         type : "get"
     };
     
