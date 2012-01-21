@@ -37,7 +37,7 @@ function addPostToList(postBoxToClone, data_r_result, prependToList){
 function loadPostsAll(which,cursorWindowKey,prependToList,noPostsText){
     var options = {
         dataType : "json",
-        data : {"which" : which ,"since" : window[cursorWindowKey] },
+        data : {"which" : which ,"since" : encodeURI(window[cursorWindowKey]) },
         success : function(data, textStatus, jqXHR){
             if (data.c != "None"){
                 window[cursorWindowKey] = data.c;

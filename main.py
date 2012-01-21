@@ -67,7 +67,7 @@ class GetPostsHandler(webapp.RequestHandler):
             get_which = self.request.get("which")
             get_since = self.request.get("since")
             
-            if get_since == "": get_since = None
+            if get_since == "" or get_since == "undefined": get_since = None
             
             day_start = util.get_todays_start()
             day_stop = util.get_todays_stop()
