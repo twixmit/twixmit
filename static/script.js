@@ -139,7 +139,7 @@ function loadDemoPostsAll(){
                 
             if(prependToList.children().length == 0){
                 var liDom = postBoxToClone.clone();
-                liDom.children(".text").text(noPostsText);
+                liDom.children(".text").text("No demo posts at this time, sorry, check back tomorrow.");
                 liDom.show();
                 liDom.prependTo(prependToList);
             }

@@ -22,6 +22,7 @@ from google.appengine.api import memcache
 from google.appengine.ext import db
 
 import social_keys
+import cache_keys
 import model
 import os,logging
 import datetime,time
@@ -80,6 +81,8 @@ class DailyMixHandler(webapp.RequestHandler):
             
             logging.info("demo mix put id reference: %s" % mix_model.key() )
         
+        posts_results_cache_key = cache_keys.POSTS_DEMO
+        memcache.delete(posts_results_cache_key)
     
     def delete_existing_demo_posts(self):
         queries = helpers.Queries()

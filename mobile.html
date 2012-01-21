@@ -120,25 +120,25 @@
             {% endif %}
             </div>
             
-             <!-- Demo post box -->
-            <li class="ui-li ui-li-static ui-body-c" class="demo-box" id="democloneme" style="display:none;">
-                <p class="ui-li-aside ui-li-desc time"></p> 
-                <h3 class="ui-li-heading by"></h3>
-                <!--<h3 class="ui-li-heading to"></h3>-->
-                <p class="ui-li-desc text"></p>
-                <p class="ui-li-desc link" style="font-size: 10px;padding-top:10px;"></p>
-            </li>
-            
-            <div data-role="collapsible">
-            <h3>Demo mixes</h3>
-            {%if needs_twitter_auth %}
-            <p>You need to sign into twitter in order to have posts and see them here.</p>            
-            {% else %}
-            <ul data-role="listview" class="ui-listview" id="demo-posts">
-            </ul>
-            {% endif %}
-            </div>
-            
+        </div>
+        
+        <!-- Demo post box -->
+        <li class="ui-li ui-li-static ui-body-c" class="demo-box" id="democloneme" style="display:none;">
+            <p class="ui-li-aside ui-li-desc time"></p> 
+            <h3 class="ui-li-heading by"></h3>
+            <!--<h3 class="ui-li-heading to"></h3>-->
+            <p class="ui-li-desc text"></p>
+            <p class="ui-li-desc link" style="font-size: 10px;padding-top:10px;"></p>
+        </li>
+        
+        <div data-role="collapsible" data-collapsed="false" data-theme="b" data-content-theme="b">
+        <h3>Demo mixes</h3>
+        {%if needs_twitter_auth %}
+        <p>You need to sign into twitter in order to have posts and see them here.</p>            
+        {% else %}
+        <ul data-role="listview" class="ui-listview" id="demo-posts">
+        </ul>
+        {% endif %}
         </div>
 	
 
