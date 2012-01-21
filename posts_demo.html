@@ -1,0 +1,10 @@
+{  "r" : [
+{% for post in r %}
+    {"id" : "{{ post.key }}",
+    "created" : "{{ post.created }}",
+    "by_user" : "{{post.posted_from_user}}",
+    "to_user" : "{{post.posted_to_user}}",
+    "link" : "{{post.link|escape}}",
+    "text" : "{{ post.text|escape}}" } {% if not forloop.last %},{% endif %}
+{% endfor %}
+]}

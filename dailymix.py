@@ -64,23 +64,19 @@ class DailyMixHandler(webapp.RequestHandler):
             combo = post_list[index]
             to_user = user_list[index]
             
-            #whats_left_for_text = 140 - (10 + len(to_user) + len(combo[1]) )
-            #logging.info("whats left for text: %s" % whats_left_for_text)
-            
-            #if (len(combo[0]) + whats_left_for_text) > 140:
-            #   trim_to = (len(combo[0]) + whats_left_for_text) - (140 + 3)
-            #   logging.info("trimming text to length: %s" % trim_to)
-            #   
-            #   combo[0] = "%s..." % combo[0][:trim_to]
-            
-            status = "f: @%s %s t: @%s" % (combo[1],combo[2],to_user)
+            status = "%s" % (combo[0])
             
             logging.info(status)
             
-            try:
-                api.update_status(status=status,source="twixmit")
-            except TweepError, e:
-                logging.error("TweepError: %s", e)
+            #try:
+            #    api.update_status(status=status,source="twixmit")
+            #except TweepError, e:
+            #    logging.error("TweepError: %s", e)
+                
+            mix_model = model.SocialDemoMixesFromFollowing(posted_from_user=combo[1],link=combo[2],posted_to_user=to_user,text=combo[0])
+            mix_model.put()
+            
+            logging.info("demo mix put id reference: %s" % mix_model.key() )
         
     
     def perform_mix(self,user_list,post_list,api,move_to):

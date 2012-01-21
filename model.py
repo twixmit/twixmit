@@ -25,3 +25,12 @@ class SocialPostMixesForUsers(db.Model):
     posted_to_twitter = db.BooleanProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
     updated = db.DateTimeProperty(auto_now=True)
+    
+class SocialDemoMixesFromFollowing(db.Model):
+    posted_to_user = db.StringProperty(required=True)
+    posted_from_user = db.StringProperty(required=True)
+    text = db.StringProperty(required=True)
+    link = db.LinkProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+    updated = db.DateTimeProperty(auto_now=True)
+    

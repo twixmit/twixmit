@@ -59,6 +59,11 @@ class Queries(object):
         
         return q                
         
+    def get_posts_demo(self):
+        q = model.SocialDemoMixesFromFollowing.all()
+        q.order("created")
+        return q                
+        
 
 class Util(object):
     
