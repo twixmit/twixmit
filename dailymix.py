@@ -69,7 +69,7 @@ class DailyMixHandler(webapp.RequestHandler):
             
             status = "%s" % (combo[0])
             
-            logging.info(status)
+            #logging.info(status)
             
             #try:
             #    api.update_status(status=status,source="twixmit")
