@@ -89,13 +89,29 @@ function loadPostsAll(which,cursorWindowKey,prependToList,noPostsText){
 
 }
 
+function addDemoPostToList(postBoxToClone, data_r_result, prependToList){
+    var liDom = postBoxToClone.clone();
+    liDom.children(".text").html("@" + data_r_result.to_user + " " + data_r_result.text);
+    liDom.children(".time").text(data_r_result.created);
+    liDom.children(".by").text("via @" + data_r_result.by_user);
+    //liDom.children(".to").text("to @" + data_r_result.to_user);
+    liDom.children(".link").html('<a href="' + data_r_result.link + '">' + data_r_result.link + '</a>');
+    liDom.attr("id",data_r_result.id)
+    liDom.prependTo(prependToList);
+    liDom.fadeIn('slow');
+}
+
 function loadDemoPostsAll(){
+    
+    var postBoxToClone = $("#democloneme");
+    var prependToList = $("#demo-posts");
+    
     var options = {
         dataType : "json",
         data : {},
         success : function(data, textStatus, jqXHR){
         
-            /*if(data.r && data.r.length > 0){
+            if(data.r && data.r.length > 0){
                 for( result in data.r){
                     
                     if (data.r[result].id && data.r[result].id != ""){
@@ -103,7 +119,7 @@ function loadDemoPostsAll(){
                         var exists = $("li#" + data.r[result].id);
                         
                         if (exists && exists.length == 0){
-                            addPostToList(postBoxToClone,data.r[result],prependToList);
+                            addDemoPostToList(postBoxToClone,data.r[result],prependToList);
                         } else {
                             if( console && console.warn){
                                 console.warn("post already on page: %s",data.r[result].id )
@@ -126,7 +142,7 @@ function loadDemoPostsAll(){
                 liDom.children(".text").text(noPostsText);
                 liDom.show();
                 liDom.prependTo(prependToList);
-            }*/
+            }
         },
         error : function(jqXHR, textStatus, errorThrown){
             if (console && console.error){
