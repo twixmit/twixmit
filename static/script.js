@@ -1,3 +1,42 @@
+twttr.anywhere(function (T) {
+    
+    if (T.isConnected()) {
+        twttrAnywhereConnected(T.currentUser);
+        
+        T.linkifyUsers();
+        T.hovercards();
+        
+    } else {
+        $("#twitter-anywhere-needslogin").show();
+        $("#twitter-anywhere-loggedin").hide();
+        
+        T("span#twitter-anywhere-connect").connectButton({ 
+            size: "large",
+            authComplete: function(user) {
+                twttrAnywhereConnected(user);
+            }
+        });
+    }
+    
+});
+
+function twttrAnywhereConnected(currentUser){
+    $("#twitter-anywhere-needslogin").hide();
+    $("#twitter-anywhere-loggedin").show();
+    
+    var screenName,profileImage,profileImageTag;
+    screenName = currentUser.data('screen_name');
+    profileImage = currentUser.data('profile_image_url');
+    
+    $(".twitter-anywhere-screename").html("@" + screenName);
+    
+    $("#twitter-anywhere-signout").bind("click", function () {
+      twttr.anywhere.signOut();
+    });
+    
+    
+}
+
 function twixmitMainReady(){
     window.saveResultsDom = $("#save-results");
     window.textToSave = $("#text-to-save");
