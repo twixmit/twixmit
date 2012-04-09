@@ -7,6 +7,8 @@ import model
 import datetime,time
 import cache_keys
 import logging
+import hashlib
+import social_keys
 
 #http://groups.google.com/group/google-appengine-python/browse_thread/thread/c4e4c9417fb0a5fb
 class GMT(datetime.tzinfo):
@@ -76,6 +78,25 @@ class Util(object):
         EXPIRATION_MASK = "%a, %d %b %Y %H:%M:%S %Z"
         
         return expiration.strftime(EXPIRATION_MASK)
+            
+    
+    def is_user_viacookie_good(self,request):
+        if "twitter_anywhere_identity" in request.cookies.keys():
+            user_sig_pair = request.cookies["twitter_anywhere_identity"]
+            user = user_sig_pair.split(":")[0]
+            sig = user_sig_pair.split(":")[1]
+            
+            m = hashlib.sha1()
+            m.update(user + social_keys.TWITTER_CONSUMER_SECRET)
+            if m.digest() == sig:
+            
+            else:
+                return None
+        else:
+            return None
+             
+            
+            
             
     
     def is_user_good(self):
