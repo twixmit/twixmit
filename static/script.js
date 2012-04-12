@@ -14,9 +14,6 @@ twttr.anywhere(function (T) {
             size: "large",
             authComplete: function(user) {
                 twttrAnywhereConnected(user);
-                
-                T.linkifyUsers();
-                T.hovercards();
             }
         });
     }
