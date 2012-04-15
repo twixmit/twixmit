@@ -78,27 +78,7 @@ class Util(object):
         EXPIRATION_MASK = "%a, %d %b %Y %H:%M:%S %Z"
         
         return expiration.strftime(EXPIRATION_MASK)
-            
-    
-    def is_user_viacookie_good(self,request):
-        if "twitter_anywhere_identity" in request.cookies.keys():
-            user_sig_pair = request.cookies["twitter_anywhere_identity"]
-            user = user_sig_pair.split(":")[0]
-            sig = user_sig_pair.split(":")[1]
-            
-            m = hashlib.sha1()
-            m.update(user + social_keys.TWITTER_CONSUMER_SECRET)
-            if m.digest() == sig:
-            
-            else:
-                return None
-        else:
-            return None
-             
-            
-            
-            
-    
+        
     def is_user_good(self):
         user = users.get_current_user()
         if user:
