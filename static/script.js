@@ -1,6 +1,6 @@
 
-function twixmitMainReady(){
-
+// ready for any user
+function twixmitGlobalReady(){
     if(twttr){
         twttr.anywhere(function (T) {
             T.linkifyUsers();
@@ -8,6 +8,13 @@ function twixmitMainReady(){
         });
     }
     
+    loadDemoPostsAll();
+}
+
+
+// ready for fully auth user
+function twixmitMainReady(){
+
     window.saveResultsDom = $("#save-results");
     window.textToSave = $("#text-to-save");
     window.postResubmit = $("#checkbox-resubmit");
@@ -25,8 +32,6 @@ function twixmitMainReady(){
     setTimeout("loadTheirsPending()",500);
     
     setupPostLoadTimers();
-    
-    loadDemoPostsAll();
 }
 
 function setupPostLoadTimers(){
