@@ -76,8 +76,7 @@ class Util(object):
         EXPIRATION_MASK = "%a, %d %b %Y %H:%M:%S %Z"
         
         return expiration.strftime(EXPIRATION_MASK)
-            
-    
+
     def is_user_good(self):
         user = users.get_current_user()
         if user:

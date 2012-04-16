@@ -59,35 +59,35 @@ class GetDemoPostsHandler(webapp.RequestHandler):
         util = helpers.Util()
         user_model = util.is_user_good()
     
-        if not user_model == None:
-            _template_values = {}
-             
-            posts_results_cache_key = cache_keys.POSTS_DEMO
-            cache_results = memcache.get(posts_results_cache_key)
-            
-            if not cache_results == None:
-                logging.info("cached search results being returned for key: %s" % posts_results_cache_key)
-                _template_values["r"] = cache_results
-            else:
-                logging.info("search results not found for cache key %s" % posts_results_cache_key)
-                queries = helpers.Queries()
-                q = queries.get_posts_demo()
-                results = q.fetch(10, config=queries.get_db_run_config_eventual() )
-                
-                _template_values["r"] = results
-                memcache.add(posts_results_cache_key, _template_values["r"], 3600)
-            
-            _path = os.path.join(os.path.dirname(__file__), 'posts_demo.html') 
-            
-            self.response.headers["Expires"] = util.get_expiration_stamp(3600)
-            self.response.headers["Content-Type"] = "application/json"
-            self.response.headers["Cache-Control: max-age"] = 3600
-            self.response.headers["Cache-Control"] = "public"
-            self.response.out.write(template.render(_path, _template_values))
-             
+        #if not user_model == None:
+        _template_values = {}
+         
+        posts_results_cache_key = cache_keys.POSTS_DEMO
+        cache_results = memcache.get(posts_results_cache_key)
+        
+        if not cache_results == None:
+            logging.info("cached search results being returned for key: %s" % posts_results_cache_key)
+            _template_values["r"] = cache_results
         else:
-            fail = FailureJson(FAILURE_NO_USER_CODE,FAILURE_NO_USER_TEXT)
-            self.response.out.write( fail.get_json() )
+            logging.info("search results not found for cache key %s" % posts_results_cache_key)
+            queries = helpers.Queries()
+            q = queries.get_posts_demo()
+            results = q.fetch(10, config=queries.get_db_run_config_eventual() )
+            
+            _template_values["r"] = results
+            memcache.add(posts_results_cache_key, _template_values["r"], 3600)
+        
+        _path = os.path.join(os.path.dirname(__file__), 'posts_demo.html') 
+        
+        self.response.headers["Expires"] = util.get_expiration_stamp(3600)
+        self.response.headers["Content-Type"] = "application/json"
+        self.response.headers["Cache-Control: max-age"] = 3600
+        self.response.headers["Cache-Control"] = "public"
+        self.response.out.write(template.render(_path, _template_values))
+             
+        #else:
+        #    fail = FailureJson(FAILURE_NO_USER_CODE,FAILURE_NO_USER_TEXT)
+        #    self.response.out.write( fail.get_json() )
 
 class GetPostsHandler(webapp.RequestHandler):
     def get(self): 

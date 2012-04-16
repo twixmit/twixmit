@@ -1,14 +1,14 @@
 <!DOCTYPE html> 
 <html> 
-	<head> 
-	<title>twixmit - BETA</title> 
-	<meta name="viewport" content="width=device-width, initial-scale=1"> 
-	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.css" />
-	<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
-	<script src="http://platform.twitter.com/anywhere.js?id=rqYxWQtcMINcYQ7facAyQ&v=1" type="text/javascript"></script>
-	<script type="text/javascript" src="/static/script.js"></script>
-	<script type="text/javascript" src="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.js"></script>
-	<script type="text/javascript">
+    <head> 
+    <title>twixmit - BETA</title> 
+    <meta name="viewport" content="width=device-width, initial-scale=1"> 
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.css" />
+	<script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js"></script>
+    <script src="http://platform.twitter.com/anywhere.js?id=rqYxWQtcMINcYQ7facAyQ&v=1" type="text/javascript"></script> 
+    <script type="text/javascript" src="/static/script.js"></script>
+    <script type="text/javascript">
       var _gaq = _gaq || [];
       _gaq.push(['_setAccount', 'UA-27799413-1']);
       _gaq.push(['_trackPageview']);
@@ -24,25 +24,25 @@
 <body> 
 
 <div data-role="page" id="home">
-	<div data-role="header">
-		<a href="/mobile#about" data-rel="dialog" data-icon="info">About</a> 
-		<h1>twixmit - BETA</h1>
-	</div><!-- /header -->
+    <div data-role="header">
+        <a href="/mobile#about" data-rel="dialog" data-icon="info">About</a> 
+        <h1>twixmit - BETA</h1>
+    </div><!-- /header -->
 
-	<div data-role="content" style="">	
+    <div data-role="content" style="">	
         <img src="/static/noun_project_296_1.png" alt="logo" style="padding-right:5px;float:left;" />
         <table height="72px" style="font-weight:bold;">
             <tr><td>t</td><td>w</td><td>i</td><td>x</td><td>m</td><td>i</td><td>t</td></tr>
             <tr><td>_</td><td>_</td><td>_</td><td>^</td><td>_</td><td>_</td><td>^</td></tr>
         </table>
         <p><small>the next mix runs at {{ next_mix_run_time }} UTC</small></p>
-		
+        
         <div data-role="collapsible-set">
         
-            <div data-role="collapsible" data-collapsed="false">
+            <div data-role="collapsible" {%if needs_twitter_auth %}data-collapsed="false" {% endif %}>
             <h3>Account Information</h3>
+            {% if user %}
                 <ul data-role="listview" class="ui-listview">
-                    <!--
                     <li class="ui-li ui-li-static ui-body-c">
                         <p class="ui-li-aside ui-li-desc"><a href="{{ logout_url }}">sign out</a></p>
                         <h3 class="ui-li-heading">Google - {{ user.nickname }}</h3>
@@ -50,31 +50,31 @@
                         <p class="ui-li-desc"><img src="/static/noun_project_efc6cb60-70b9-4263-bf0f-947913b1f483.png" /></p>
                         
                     </li>
-                    -->
-                    <li class="ui-li ui-li-static ui-body-c" id="twitter-anywhere-needslogin" style="display:none;">
-                        <p class="ui-li-aside ui-li-desc">sign into twitter</p>
-                        <h3 class="ui-li-heading">You need to sign into Twitter!</h3>
-                        <p class="ui-li-desc">
-                            <span id="twitter-anywhere-connect"></span><br /><br />
-                            <strong>In order to post, you need to sign into twitter!</strong>
-                            
-                        </p>
+                    <li class="ui-li ui-li-static ui-body-c">
+                        {%if needs_twitter_auth %}
                         
-                        <!--
+                        <p class="ui-li-aside ui-li-desc"><a href="{{redirect_url}}">sign into twitter</a></p>
+                        <h3 class="ui-li-heading">You need to sign into Twitter!</h3>
+                        <p class="ui-li-desc"><strong>In order to post, you need to sign into twitter!</strong></p>
+                        <p class="ui-li-desc"><img src="/static/noun_project_554_1.png" /></p>
+                        
+                        {% else %}
+                        
                         <p class="ui-li-aside ui-li-desc"></p>
                         <h3 class="ui-li-heading">Twitter - @{{twitter_user.screen_name }}</h3>
                         <p class="ui-li-desc"><strong>You've been signed in as {{twitter_user.screen_name }}.</strong></p>
                         <p class="ui-li-desc"><img src="/static/noun_project_efc6cb60-70b9-4263-bf0f-947913b1f483.png" /></p>
-                        -->
-                    </li>
-                    <li class="ui-li ui-li-static ui-body-c" id="twitter-anywhere-loggedin" style="display:none;">
-                        <p class="ui-li-aside ui-li-desc"></p>
-                        <h3 class="ui-li-heading">Twitter - <span class="twitter-anywhere-screename"></span></h3>
-                        <p class="ui-li-desc"><strong>You've been signed in as <span class="twitter-anywhere-screename"></span>.</strong></p>
-                        <p class="ui-li-desc"><img src="/static/noun_project_efc6cb60-70b9-4263-bf0f-947913b1f483.png" /></p>
-                        <p class="ui-li-desc"><button type="button" onclick="twttr.anywhere.signOut();">Sign out of Twitter</button></p>
+                        
+                        {% endif %} 
+                        
                     </li>
                 </ul>
+            
+            {% else %}
+            <img src="/static/noun_project_554_1.png" />
+            <p>who are you? to play <a href="{{ login_url }}">sign into google!</a></p>
+            {%  endif %}
+            
             </div>
             
             <div data-role="collapsible" {%if not needs_twitter_auth %}data-collapsed="false" {% endif %}>
@@ -134,26 +134,22 @@
         
         <div data-role="collapsible" data-collapsed="false" data-theme="b" data-content-theme="b">
         <h3>Demo mixes</h3>
-        {%if needs_twitter_auth %}
-        <p>You need to sign into twitter in order to have posts and see them here.</p>            
-        {% else %}
         <ul data-role="listview" class="ui-listview" id="demo-posts">
         </ul>
-        {% endif %}
         </div>
-	
+    
 
-	</div><!-- /content -->
+    </div><!-- /content -->
 
-	<div data-role="footer">
-	    <div data-role="controlgroup" data-type="horizontal" style="text-align:center">
+    <div data-role="footer">
+        <div data-role="controlgroup" data-type="horizontal" style="text-align:center">
         <a href="/static/LICENSE.txt" data-role="button" data-rel="external" rel="external">LICENSE</a>
         <a href="/static/ATTRIBUTION.txt" data-role="button" data-rel="external" rel="external">ATTRIBUTION</a>
         <a href="mailto:twixmit@gmail.com" data-role="button" data-rel="external" rel="external">EMAIL</a>
         <a href="https://github.com/twixmit/twixmit" data-role="button" data-rel="external" rel="external">CODE</a>
         <a href="https://twitter.com/twixmit" data-role="button" data-rel="external" rel="external">TWITTER</a>
         </div>
-	</div><!-- /footer -->
+    </div><!-- /footer -->
 </div><!-- /page -->
 
 <div data-role="page" id="about" data-title="twixmit - about">
@@ -170,6 +166,7 @@
 
 <script type="text/javascript">
 $("#home").live("pageinit", function(e) {
+    twixmitGlobalReady();
     {%if not needs_twitter_auth %}
     twixmitMainReady();
     {% endif %}
@@ -177,4 +174,4 @@ $("#home").live("pageinit", function(e) {
     
 </script>
 </body>
-</html>
+</html> 
