@@ -15,10 +15,13 @@
 # limitations under the License.
 #
 
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp import util
-from google.appengine.api import users
-from google.appengine.ext.webapp import template
+try:
+    from google.appengine.ext import webapp
+    from google.appengine.ext.webapp import util
+    from google.appengine.api import users
+    from google.appengine.ext.webapp import template
+except Exception, exception:
+    pass
 
 import os,logging,re,sys
 import social_keys
@@ -37,7 +40,7 @@ from tweepy.auth import BasicAuthHandler
 
 class TestStreamListener(StreamListener):
     def on_status(self, status):
-        logging.info(status.text)
+        print status.text
         return
         
     def on_error(self, status_code):
@@ -49,7 +52,7 @@ class TestStreamListener(StreamListener):
         logging.error('Timeout...')
         return True # Don't kill the stream
 
-class StreamsTestsHandler(webapp.RequestHandler):
+class StreamsTestsHandler(object):
 
     def get(self): 
         #auth1 = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
@@ -57,22 +60,27 @@ class StreamsTestsHandler(webapp.RequestHandler):
         
         api1 = API()
         
-        #headers = {}
+        headers = {}
+        headers["Accept-Encoding"] = "deflate, gzip"
         #headers["Authorization"] = "Basic %s" % social_keys.TWITTER_HTTP_AUTH_BASE64
         stream_auth = BasicAuthHandler(social_keys.TWITTER_HTTP_AUTH_U,social_keys.TWITTER_HTTP_AUTH_P)
         
         l = TestStreamListener(api=api1)
-        stream = Stream(auth=stream_auth,listener=l,secure=True)
+        stream = Stream(auth=stream_auth,listener=l,secure=True,headers=headers)
         
         #setTerms = ['hello', 'goodbye', 'goodnight', 'good morning']
         stream.sample()
         #stream.retweet()
         #stream.filter(None,setTerms)
+        #track="basketball,football,baseball,footy,soccer"
+        #stream.filter(track=track)
     
-application = webapp.WSGIApplication([('/streams/tests/', StreamsTestsHandler)], debug=True)
+#application = webapp.WSGIApplication([('/streams/tests/', StreamsTestsHandler)], debug=True)
     
 def main():    
-    util.run_wsgi_app(application)
+    #util.run_wsgi_app(application)
+    r = StreamsTestsHandler()
+    r.get()
 
 if __name__ == '__main__':
     main()
