@@ -6,6 +6,11 @@ api_version: 1
 default_expiration: "1d"
 
 handlers:
+
+- url: /streams/tests/.*
+  script: streamstest.py
+  login: admin
+  
 - url: /tasks/dailymix/.*
   script: dailymix.py
   login: admin
