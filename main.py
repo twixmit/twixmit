@@ -14,7 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from google.appengine.ext import webapp
+
+import webapp2
 from google.appengine.ext.webapp import util
 from google.appengine.api import users
 from google.appengine.ext.webapp import template
@@ -56,7 +57,7 @@ class FailureJson(object):
         return json.dumps({"success" : False, "failure_key" : self.failure_key, "failure_message" : self.failure_message});
 
 
-class GetDemoPostsHandler(webapp.RequestHandler):
+class GetDemoPostsHandler(webapp2.RequestHandler):
     def get(self): 
         util = helpers.Util()
         user_model = util.is_user_good()
@@ -91,7 +92,7 @@ class GetDemoPostsHandler(webapp.RequestHandler):
         #    fail = FailureJson(FAILURE_NO_USER_CODE,FAILURE_NO_USER_TEXT)
         #    self.response.out.write( fail.get_json() )
 
-class GetPostsHandler(webapp.RequestHandler):
+class GetPostsHandler(webapp2.RequestHandler):
     def get(self): 
     
         util = helpers.Util()
@@ -176,7 +177,7 @@ class GetPostsHandler(webapp.RequestHandler):
             fail = FailureJson(FAILURE_NO_USER_CODE,FAILURE_NO_USER_TEXT)
             self.response.out.write( fail.get_json() )
 
-class SavePostForMixHandler(webapp.RequestHandler):
+class SavePostForMixHandler(webapp2.RequestHandler):
     
     def get(self):
         self.redirect("/")
@@ -214,7 +215,7 @@ class SavePostForMixHandler(webapp.RequestHandler):
             fail = FailureJson(FAILURE_NO_USER_CODE,FAILURE_NO_USER_TEXT)
             self.response.out.write( fail.get_json() )
 
-class MainHandler(webapp.RequestHandler):
+class MainHandler(webapp2.RequestHandler):
     
     def get(self):
         try:
@@ -306,7 +307,7 @@ class MainHandler(webapp.RequestHandler):
         
         return _template_values
         
-class CallbackHandler(webapp.RequestHandler):
+class CallbackHandler(webapp2.RequestHandler):
     def get(self):
         verifier = self.request.GET.get('oauth_verifier')
         
@@ -375,7 +376,7 @@ class MainMobileHandler(MainHandler):
             self.redirect(URL_STATIC_ERROR_DEFAULT)
 
 def main():
-    application = webapp.WSGIApplication([('/', MainMobileHandler),
+    application = webapp2.WSGIApplication([('/', MainMobileHandler),
                                             ('/callback', CallbackHandler),
                                             ('/saveformix',SavePostForMixHandler),
                                             ('/getposts',GetPostsHandler),
