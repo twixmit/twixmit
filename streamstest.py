@@ -29,6 +29,10 @@ from tweepy.auth import OAuthHandler
 from tweepy.auth import API
 from tweepy.error import TweepError
 from tweepy.streaming import StreamListener,Stream
+from tweepy.auth import BasicAuthHandler
+
+# Reference: https://gist.github.com/1112928
+#   http://mtrovo.com/blog/2011/07/using-the-twitter-streaming-api-with-python-and-tweepy/
 
 class TestStreamListener(StreamListener):
     def on_status(self, status):
@@ -36,7 +40,7 @@ class TestStreamListener(StreamListener):
         return
         
     def on_error(self, status_code):
-        logging.error('Encountered error with status code:', status_code)
+        logging.error(status_code)
         return False # Don't kill the stream
 
     def on_timeout(self):
@@ -50,14 +54,16 @@ class StreamsTestsHandler(webapp.RequestHandler):
         auth1 = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
         auth1.set_access_token(social_keys.TWITTER_APP_ACCESS_TOKEN,social_keys.TWITTER_APP_ACCESS_TOKEN_SECRET)
         
-        api = API(auth1)
+        api1 = API(auth1)
         
-        headers = {}
-        headers["Authorization"] = "Basic %s" % social_keys.TWITTER_HTTP_AUTH_BASE64
+        #headers = {}
+        #headers["Authorization"] = "Basic %s" % social_keys.TWITTER_HTTP_AUTH_BASE64
+        stream_auth = BasicAuthHandler(social_keys.TWITTER_HTTP_AUTH_U,social_keys.TWITTER_HTTP_AUTH_P)
         
-        l = TestStreamListener()
-        stream = Stream(auth=auth1,listener=l,timeout=3000000000,headers=headers)
-        setTerms = ['hello', 'goodbye', 'goodnight', 'good morning']
+        l = TestStreamListener(api=api1)
+        stream = Stream(auth=stream_auth,listener=l,timeout=3000000000)
+        
+        #setTerms = ['hello', 'goodbye', 'goodnight', 'good morning']
         stream.sample(count=10)
         #stream.filter(None,setTerms)
     
