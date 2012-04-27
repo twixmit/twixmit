@@ -40,9 +40,13 @@ from tweepy.auth import BasicAuthHandler
 # Reference: https://gist.github.com/1112928
 #   http://mtrovo.com/blog/2011/07/using-the-twitter-streaming-api-with-python-and-tweepy/
 #   http://code.google.com/p/googleappengine/source/browse/trunk/python/google/appengine/dist27/httplib.py
+#   http://docs.python.org/library/urllib2.html
+#   http://stackoverflow.com/questions/3338853/how-to-declare-a-timeout-using-urllib2-on-google-app-engine
+#   
 
 class TestStreamListener(StreamListener):
     def on_status(self, status):
+        logging.info( status.text)
         print status.text
         return
         
