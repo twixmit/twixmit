@@ -1,0 +1,4 @@
+[submodule "tweepy"]
+	path = tweepy
+	url = git://github.com/tweepy/tweepy.git
+
