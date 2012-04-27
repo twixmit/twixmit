@@ -23,12 +23,14 @@ from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 
 import social_keys
 import model
-import os,logging,re
+import os,logging,re,sys
 import datetime,time
 import cache_keys
 import helpers
 
 from django.utils import simplejson as json
+
+sys.path.insert(0, 'tweepy')
 
 from tweepy.auth import OAuthHandler
 from tweepy.auth import API

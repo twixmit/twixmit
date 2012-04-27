@@ -24,10 +24,12 @@ from google.appengine.ext import db
 import social_keys
 import cache_keys
 import model
-import os,logging
+import os,logging,sys
 import datetime,time
 import random
 import helpers
+
+sys.path.insert(0, 'tweepy')
 
 from tweepy.auth import OAuthHandler
 from tweepy.auth import API
