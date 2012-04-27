@@ -33,6 +33,7 @@ from tweepy.auth import BasicAuthHandler
 
 # Reference: https://gist.github.com/1112928
 #   http://mtrovo.com/blog/2011/07/using-the-twitter-streaming-api-with-python-and-tweepy/
+#   http://code.google.com/p/googleappengine/source/browse/trunk/python/google/appengine/dist27/httplib.py
 
 class TestStreamListener(StreamListener):
     def on_status(self, status):
@@ -51,20 +52,21 @@ class TestStreamListener(StreamListener):
 class StreamsTestsHandler(webapp.RequestHandler):
 
     def get(self): 
-        auth1 = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
-        auth1.set_access_token(social_keys.TWITTER_APP_ACCESS_TOKEN,social_keys.TWITTER_APP_ACCESS_TOKEN_SECRET)
+        #auth1 = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
+        #auth1.set_access_token(social_keys.TWITTER_APP_ACCESS_TOKEN,social_keys.TWITTER_APP_ACCESS_TOKEN_SECRET)
         
-        api1 = API(auth1)
+        api1 = API()
         
         #headers = {}
         #headers["Authorization"] = "Basic %s" % social_keys.TWITTER_HTTP_AUTH_BASE64
         stream_auth = BasicAuthHandler(social_keys.TWITTER_HTTP_AUTH_U,social_keys.TWITTER_HTTP_AUTH_P)
         
         l = TestStreamListener(api=api1)
-        stream = Stream(auth=stream_auth,listener=l,timeout=3000000000)
+        stream = Stream(auth=stream_auth,listener=l,secure=True)
         
         #setTerms = ['hello', 'goodbye', 'goodnight', 'good morning']
-        stream.sample(count=10)
+        stream.sample()
+        #stream.retweet()
         #stream.filter(None,setTerms)
     
 application = webapp.WSGIApplication([('/streams/tests/', StreamsTestsHandler)], debug=True)
