@@ -32,21 +32,34 @@ from tweepy.streaming import StreamListener,Stream
 
 class TestStreamListener(StreamListener):
     def on_status(self, status):
-        logging.info(status)
+        logging.info(status.text)
         return
+        
+    def on_error(self, status_code):
+        logging.error('Encountered error with status code:', status_code)
+        return False # Don't kill the stream
+
+    def on_timeout(self):
+        #print >> sys.stderr, 'Timeout...'
+        logging.error('Timeout...')
+        return True # Don't kill the stream
 
 class StreamsTestsHandler(webapp.RequestHandler):
 
     def get(self): 
-        auth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
-        auth.set_access_token(social_keys.TWITTER_APP_ACCESS_TOKEN,social_keys.TWITTER_APP_ACCESS_TOKEN_SECRET)
+        auth1 = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
+        auth1.set_access_token(social_keys.TWITTER_APP_ACCESS_TOKEN,social_keys.TWITTER_APP_ACCESS_TOKEN_SECRET)
         
-        api = API(auth)
-        api_is_working = api.test()
+        api = API(auth1)
         
-        listener = TestStreamListener(api=api)
-        stream = Stream(auth,listener)
+        headers = {}
+        headers["Authorization"] = "Basic %s" % social_keys.TWITTER_HTTP_AUTH_BASE64
+        
+        l = TestStreamListener()
+        stream = Stream(auth=auth1,listener=l,timeout=3000000000,headers=headers)
+        setTerms = ['hello', 'goodbye', 'goodnight', 'good morning']
         stream.sample(count=10)
+        #stream.filter(None,setTerms)
     
 application = webapp.WSGIApplication([('/streams/tests/', StreamsTestsHandler)], debug=True)
     
