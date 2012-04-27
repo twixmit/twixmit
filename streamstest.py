@@ -15,12 +15,15 @@
 # limitations under the License.
 #
 
+IS_GAE = True
+
 try:
     from google.appengine.ext import webapp
     from google.appengine.ext.webapp import util
     from google.appengine.api import users
     from google.appengine.ext.webapp import template
 except Exception, exception:
+    IS_GAE = False
     pass
 
 import os,logging,re,sys
@@ -52,35 +55,34 @@ class TestStreamListener(StreamListener):
         logging.error('Timeout...')
         return True # Don't kill the stream
 
-class StreamsTestsHandler(object):
+class StreamsTestsPlain(object):
 
-    def get(self): 
-        #auth1 = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
-        #auth1.set_access_token(social_keys.TWITTER_APP_ACCESS_TOKEN,social_keys.TWITTER_APP_ACCESS_TOKEN_SECRET)
-        
+    def stream(self):
         api1 = API()
         
         headers = {}
         headers["Accept-Encoding"] = "deflate, gzip"
-        #headers["Authorization"] = "Basic %s" % social_keys.TWITTER_HTTP_AUTH_BASE64
         stream_auth = BasicAuthHandler(social_keys.TWITTER_HTTP_AUTH_U,social_keys.TWITTER_HTTP_AUTH_P)
         
         l = TestStreamListener(api=api1)
         stream = Stream(auth=stream_auth,listener=l,secure=True,headers=headers)
         
-        #setTerms = ['hello', 'goodbye', 'goodnight', 'good morning']
         stream.sample()
-        #stream.retweet()
-        #stream.filter(None,setTerms)
-        #track="basketball,football,baseball,footy,soccer"
-        #stream.filter(track=track)
+
+if IS_GAE:
+    class StreamsTestsHandler(webapp.RequestHandler):
     
-#application = webapp.WSGIApplication([('/streams/tests/', StreamsTestsHandler)], debug=True)
+        def get(self): 
+            plain = StreamsTestsPlain()
+            plain.stream()
     
-def main():    
-    #util.run_wsgi_app(application)
-    r = StreamsTestsHandler()
-    r.get()
+def main():  
+    if IS_GAE:  
+        application = webapp.WSGIApplication([('/streams/tests/', StreamsTestsHandler)], debug=True)
+        util.run_wsgi_app(application)
+    else:
+        r = StreamsTestsPlain()
+        r.stream()
 
 if __name__ == '__main__':
     main()
