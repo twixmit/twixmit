@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-from google.appengine.ext import webapp2
+from google.appengine.ext import webapp
 from google.appengine.ext.webapp import util
 from google.appengine.api import users
 from google.appengine.ext.webapp import template
@@ -35,7 +35,7 @@ class TestStreamListener(StreamListener):
         logging.info(status)
         return
 
-class StreamsTestsHandler(webapp2.RequestHandler):
+class StreamsTestsHandler(webapp.RequestHandler):
 
     def get(self): 
         auth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
@@ -47,9 +47,10 @@ class StreamsTestsHandler(webapp2.RequestHandler):
         listener = TestStreamListener(api=api)
         stream = Stream(auth,listener)
         stream.sample(count=10)
-        
-def main():
-    application = webapp2.WSGIApplication([('/streams/tests/', StreamsTestsHandler)], debug=True)
+    
+application = webapp.WSGIApplication([('/streams/tests/', StreamsTestsHandler)], debug=True)
+    
+def main():    
     util.run_wsgi_app(application)
 
 if __name__ == '__main__':

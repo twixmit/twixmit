@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from google.appengine.ext import webapp2
+from google.appengine.ext import webapp
 from google.appengine.ext.webapp import util
 from google.appengine.api import users
 from google.appengine.ext.webapp import template
@@ -35,7 +35,7 @@ from tweepy.auth import OAuthHandler
 from tweepy.auth import API
 from tweepy.error import TweepError
 
-class DailyMixHandler(webapp2.RequestHandler):
+class DailyMixHandler(webapp.RequestHandler):
     
     def perform_demo(self,api):
         statues = memcache.get("twixmit_friends_timeline")
@@ -235,8 +235,9 @@ class DailyMixHandler(webapp2.RequestHandler):
         logging.info("done with mix assignments")
 
 
+application = webapp.WSGIApplication([('/tasks/dailymix/', DailyMixHandler)], debug=True)
+
 def main():
-    application = webapp2.WSGIApplication([('/tasks/dailymix/', DailyMixHandler)], debug=True)
     util.run_wsgi_app(application)
 
 if __name__ == '__main__':

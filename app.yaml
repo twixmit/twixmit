@@ -1,7 +1,6 @@
 application: twix-mit
 version: 1
-runtime: python27
-threadsafe: false
+runtime: python
 api_version: 1
 
 default_expiration: "1d"
