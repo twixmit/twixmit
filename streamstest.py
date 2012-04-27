@@ -21,6 +21,7 @@ from google.appengine.api import users
 from google.appengine.ext.webapp import template
 
 import os,logging,re,sys
+import social_keys
 
 sys.path.insert(0, 'tweepy')
 
