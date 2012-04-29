@@ -46,7 +46,6 @@ from tweepy.auth import BasicAuthHandler
 
 class TestStreamListener(StreamListener):
     def on_status(self, status):
-        logging.info( status.text)
         print status.text
         return
         
@@ -60,8 +59,12 @@ class TestStreamListener(StreamListener):
         return True # Don't kill the stream
 
 class StreamsTestsPlain(object):
-
-    def stream(self):
+    
+    def __init__(self):
+        self._stream = None
+        self._stream_init()
+    
+    def _stream_init(self):
         api1 = API()
         
         headers = {}
@@ -69,9 +72,13 @@ class StreamsTestsPlain(object):
         stream_auth = BasicAuthHandler(social_keys.TWITTER_HTTP_AUTH_U,social_keys.TWITTER_HTTP_AUTH_P)
         
         l = TestStreamListener(api=api1)
-        stream = Stream(auth=stream_auth,listener=l,secure=True,headers=headers)
+        self._stream = Stream(auth=stream_auth,listener=l,secure=True,headers=headers)
         
-        stream.sample()
+    def sample(self):
+        self._stream.sample()
+        
+    def filter(self):
+        self._stream.filter(track=["$AKAM","$EMC","$AMZN","$AAPL","@StockTwits"])
 
 if IS_GAE:
     class StreamsTestsHandler(webapp.RequestHandler):
@@ -86,7 +93,7 @@ def main():
         util.run_wsgi_app(application)
     else:
         r = StreamsTestsPlain()
-        r.stream()
+        r.filter()
 
 if __name__ == '__main__':
     main()
