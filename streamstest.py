@@ -42,11 +42,12 @@ from tweepy.auth import BasicAuthHandler
 #   http://code.google.com/p/googleappengine/source/browse/trunk/python/google/appengine/dist27/httplib.py
 #   http://docs.python.org/library/urllib2.html
 #   http://stackoverflow.com/questions/3338853/how-to-declare-a-timeout-using-urllib2-on-google-app-engine
-#   
+#   https://dev.twitter.com/docs/api/1/get/statuses/show/%3Aid
+#   https://dev.twitter.com/docs/streaming-api/methods
 
 class TestStreamListener(StreamListener):
     def on_status(self, status):
-        print status.text
+        print status.user.screen_name,status.text
         return
         
     def on_error(self, status_code):
@@ -62,7 +63,16 @@ class StreamsTestsPlain(object):
     
     def __init__(self):
         self._stream = None
+        self._oauth = None
+        self._oauth_api = None
+        
         self._stream_init()
+        self._oauth_init()
+        
+    def _oauth_init(self):
+        self._oauth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
+        self._oauth.set_access_token(social_keys.TWITTER_APP_ACCESS_TOKEN,social_keys.TWITTER_APP_ACCESS_TOKEN_SECRET)
+        self._oauth_api = API(self._oauth)
     
     def _stream_init(self):
         api1 = API()
@@ -73,27 +83,40 @@ class StreamsTestsPlain(object):
         
         l = TestStreamListener(api=api1)
         self._stream = Stream(auth=stream_auth,listener=l,secure=True,headers=headers)
-        
+    
     def sample(self):
         self._stream.sample()
         
+    def filter_follow(self):
+        follow_names = ['hnfirehose','StockTwits','YahooFinance','Street_Insider','TheStreet','SquawkCNBC','CNBC','AP_PersonalFin','themotleyfool','MarketWatch','Reuters_Biz']
+        follow_usr_objs = self._oauth_api.lookup_users(screen_names=follow_names)
+        follow_ids = []
+        
+        for follow_usr in follow_usr_objs:
+            follow_ids.append(follow_usr.id)
+        
+        print follow_ids
+        
+        self._stream.filter(follow=follow_ids)
+    
     def filter(self):
         self._stream.filter(track=["$AKAM","$EMC","$AMZN","$AAPL","@StockTwits"])
 
 if IS_GAE:
-    class StreamsTestsHandler(webapp.RequestHandler):
-    
+    class StreamsTestsHandler(webapp.RequestHandler):   
         def get(self): 
-            plain = StreamsTestsPlain()
-            plain.stream()
+            pass
     
 def main():  
     if IS_GAE:  
         application = webapp.WSGIApplication([('/streams/tests/', StreamsTestsHandler)], debug=True)
         util.run_wsgi_app(application)
     else:
-        r = StreamsTestsPlain()
-        r.filter()
+        try:
+            r = StreamsTestsPlain()
+            r.filter_follow()
+        except KeyboardInterrupt:
+            pass
 
 if __name__ == '__main__':
     main()

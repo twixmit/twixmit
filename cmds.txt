@@ -1,2 +1,2 @@
 git submodule add git://github.com/tepietrondi/tweepy.git ./tweepy
-rsync -avh tweepy_tepietrondi_fork/ twixmit/tweepy
+rsync -avh --delete tweepy_tepietrondi_fork/ twixmit/tweepy
