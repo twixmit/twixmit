@@ -17,6 +17,22 @@
 
 from HTMLParser import HTMLParser
 import httplib
+import urllib2
+import sys
+import social_keys
+
+sys.path.insert(0, 'tweepy')
+
+from tweepy.auth import OAuthHandler
+from tweepy.auth import API
+from tweepy.error import TweepError
+
+#class NewsMeHTTPRedirectHandler(urllib2.HTTPRedirectHandler):
+#    http_error_301 = http_error_303 = http_error_307 = http_error_302
+#    
+#    def http_error_302(self, req, fp, code, msg, headers):
+#        print "Cookie Manip Right Here"
+#        return urllib2.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
 
 class NewsMeDigestParser(HTMLParser):    
     def __init__(self):
@@ -29,7 +45,14 @@ class NewsMeDigestParser(HTMLParser):
         
         self._tag_states = {"_digest_date" :False, "_digest_articles" : False, "_digest_explore_users" : False}
         
+        #http://stackoverflow.com/questions/9698614/super-raises-typeerror-must-be-type-not-classobj-for-new-style-class
         HTMLParser.__init__(self)
+    
+    def get_digest_articles(self):
+        return self._digest_articles
+    
+    def get_digest_explore_users(self):
+        return self._digest_explore_users
     
     def handle_starttag(self, tag, attrs):
         
@@ -74,6 +97,12 @@ class NewsMeDigestParser(HTMLParser):
         self._digest_articles.append(rec)
         self._tag_states["_digest_articles"] = True
         
+    def story_link_fetch(self,story_link):
+        #opener = urllib2.build_opener(NewsMeHTTPRedirectHandler)
+        #TODO for following the news me tracking redirect to source page
+        #<link rel="shortlink" href="http://blog.yottaa.com/?p=3233">
+        #http://code.google.com/p/shortlink/wiki/Specification
+        pass
     
     def handle_endtag(self, tag): pass
         
@@ -91,17 +120,21 @@ class NewsMeDigestParser(HTMLParser):
 class NewsMeDigester(object):
     def __init__(self,starting_user="tepietrondi",crawl_depth=1):
         self._starting_user = starting_user
-        self._crawl_depth=crawl_depth
+        self._crawl_depth_limit=crawl_depth
+        self._crawl_depth_counter = 0
         self._host = "www.news.me"
         self._url = "http://%s/%s"
+        self._parser = None
         
     def do_digest_digestion(self):
         digest_data = self.get_digest_page()
-        parser = NewsMeDigestParser()
+        self._parser = NewsMeDigestParser()
         if digest_data != None:
-            parser.feed(digest_data)
-        
+            self._parser.feed(digest_data)
     
+    def get_parser_digest_articles(self):
+        return self._parser.get_digest_articles()
+                
     def get_digest_page(self):
         conn = httplib.HTTPConnection(self._host)
         conn.connect()
@@ -111,10 +144,37 @@ class NewsMeDigester(object):
             return None
         else:
             return resp.read()
+            
+class NewsMeDigestTweeter(object):
+    def __init__(self):
+        self._oauth = None
+        self._oauth_api = None
+        
+        self._oauth_init()
+    
+    def _oauth_init(self):
+        self._oauth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
+        self._oauth.set_access_token(social_keys.TWITTER_APP_ACCESS_TOKEN,social_keys.TWITTER_APP_ACCESS_TOKEN_SECRET)
+        self._oauth_api = API(self._oauth)
+    
+    def tweet_from_digestion(self,digest_articles):
+        
+        for article in digest_articles:
+            status = "%s %s" % (article[1],article[0])
+            print status
+            
+            #try:
+            #    self._oauth_api.update_status(status=status_text,source="twixmit")
+            #except TweepError, e:
+            #    logging.error("TweepError: %s", e)
 
 def main():
     digester = NewsMeDigester()
     digester.do_digest_digestion()
+    
+    tweeter = NewsMeDigestTweeter()
+    tweeter.tweet_from_digestion(digester.get_parser_digest_articles())
+    
     
 if __name__ == '__main__':
     main()
