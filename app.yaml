@@ -7,7 +7,7 @@ default_expiration: "1d"
 
 handlers:
 
-- url: /streams/tests/.*
+- url: /tasks/newsmedigestion/.*
   script: streamstest.py
   login: admin
   
