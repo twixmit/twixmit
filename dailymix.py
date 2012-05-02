@@ -78,8 +78,11 @@ class DailyMixHandler(webapp.RequestHandler):
             #except TweepError, e:
             #    logging.error("TweepError: %s", e)
                 
-            mix_model = model.SocialDemoMixesFromFollowing(posted_from_user=combo[1],link=combo[2],posted_to_user=to_user,text=combo[0])
-            mix_model.put()
+            try:
+                mix_model = model.SocialDemoMixesFromFollowing(posted_from_user=combo[1],link=combo[2],posted_to_user=to_user,text=combo[0])
+                mix_model.put()
+            except Exception, exception:
+                logging.error(exception)
             
             logging.info("demo mix put id reference: %s" % mix_model.key() )
         
