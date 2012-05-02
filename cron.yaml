@@ -5,4 +5,4 @@ cron:
   
 - description: daily news.me digestion
   url: /tasks/newsmedigestion/
-  schedule: every day 06:00
+  schedule: every day 11:00
