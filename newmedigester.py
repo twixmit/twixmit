@@ -135,7 +135,7 @@ class NewsMeDigestParser(HTMLParser):
             
             
 class NewsMeDigester(object):
-    def __init__(self,starting_user="tepietrondi",crawl_depth=1):
+    def __init__(self,starting_user="timoreilly",crawl_depth=1):
         self._starting_user = starting_user
         self._crawl_depth_limit=crawl_depth
         self._crawl_depth_counter = 0
@@ -148,13 +148,15 @@ class NewsMeDigester(object):
         if len(self._parser.get_digest_explore_users()) > 0 and self._crawl_depth_counter < self._crawl_depth_limit:
             self._starting_user = self._parser.get_digest_explore_users().pop(0)[1:]
             
+            logging.info("starting user: %s" %self._starting_user)
+            
             if self._starting_user in self._digested_users:
-               return self._next() 
+                logging.warn("starting is digested: %s" % self._starting_user)
+                return self.next() 
             else:    
                 return True
         else:
             self._starting_user = None
-            #print "no more users to digest"
             return False
         
     def do_digest_digestion(self):
@@ -164,6 +166,10 @@ class NewsMeDigester(object):
             self._parser.feed(digest_data)
         
         self._crawl_depth_counter = self._crawl_depth_counter + 1
+        
+        logging.info( "self._crawl_depth_counter: %s" % self._crawl_depth_counter)
+        logging.info("self._digested_users: %s" %self._digested_users)
+        
         self._digested_users.append(self._starting_user)
     
     def get_parser_digest_articles(self):
@@ -171,10 +177,16 @@ class NewsMeDigester(object):
                 
     def get_digest_page(self):
         conn = httplib.HTTPConnection(self._host)
+        next_url = self._url % (self._host,self._starting_user)
+        
+        logging.info("next url: %s" % next_url)
+        
         conn.connect()
-        conn.request('GET', self._url % (self._host,self._starting_user) )
+        conn.request('GET',  next_url)
         resp = conn.getresponse()
+        
         if resp.status != 200:
+            logging.error("http connection response code is not 200 for url: %s,%i" % (next_url,resp.status))
             return None
         else:
             return resp.read()
@@ -197,29 +209,35 @@ class NewsMeDigestTweeter(object):
         for article in digest_articles:
             
             if article[0] not in self._tweeted_articles:
-                status_text = "%s %s via @newsdotme" % (article[1],article[0])
-                print status_text
+                status_text = "%s %s" % (article[1],article[0])
+                #print status_text
+                
+                try:
+                    self._oauth_api.update_status(status=status_text,source="twixmit")
+                except TweepError, e:
+                    logging.error("TweepError: %s", e)
+                
                 logging.info(status_text)
                 self._tweeted_articles.append(article[0])
             else:
                 logging.warn("skipping article: %s" % article[0] )
-            
-            #try:
-            #    self._oauth_api.update_status(status=status_text,source="twixmit")
-            #except TweepError, e:
-            #    logging.error("TweepError: %s", e)
 
 
 def run_digestion():
-    digester = NewsMeDigester(crawl_depth=100)
+    tweet_counter = 0
+    digester = NewsMeDigester(crawl_depth=1)
     digester.do_digest_digestion()
     
     tweeter = NewsMeDigestTweeter()
     tweeter.tweet_from_digestion(digester.get_parser_digest_articles())
+    tweet_counter = tweet_counter + 1
     
     while digester.next():
         digester.do_digest_digestion()
         tweeter.tweet_from_digestion(digester.get_parser_digest_articles())
+        tweet_counter = tweet_counter + 1
+        
+    logging.info("tweet counter: %i" % tweet_counter)
 
 if IS_GAE:
     class NewsmeDigestionHandler(webapp.RequestHandler):
