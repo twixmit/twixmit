@@ -20,6 +20,7 @@ import httplib
 import urllib2,urllib
 import sys
 import social_keys
+import logging
 
 sys.path.insert(0, 'tweepy')
 
@@ -30,6 +31,7 @@ from tweepy.error import TweepError
 IS_GAE = True
 try:
     from google.appengine.ext import webapp
+    from google.appengine.ext.webapp import util
 except Exception, exception:
     IS_GAE = False 
 
@@ -98,10 +100,19 @@ class NewsMeDigestParser(HTMLParser):
         href_in_attrs = None
     
     def handle_start_tag_attr_story_link(self,href_in_attrs):
-        rec = [urllib.unquote(href_in_attrs.strip().split("url=")[1].split("&")[0]), None]
+        try:
+            rec = [urllib.unquote(href_in_attrs.strip().split("url=")[1].split("&")[0]), None]
+        except IndexError,e:
+            logging.error(href_in_attrs.strip())
+            #raise e
+            rec = [href_in_attrs.strip(), None]
+            
         #print rec
-        self._digest_articles.append(rec)
-        self._tag_states["_digest_articles"] = True
+        if rec not in self._digest_articles:
+            self._digest_articles.append(rec)
+            self._tag_states["_digest_articles"] = True
+        else:
+            logging.warn("rec already in list: %s" % rec[0])
         
     def story_link_fetch(self,story_link):
         #opener = urllib2.build_opener(NewsMeHTTPRedirectHandler)
@@ -137,14 +148,13 @@ class NewsMeDigester(object):
         if len(self._parser.get_digest_explore_users()) > 0 and self._crawl_depth_counter < self._crawl_depth_limit:
             self._starting_user = self._parser.get_digest_explore_users().pop(0)[1:]
             
-            while self._starting_user in self._digested_users:
-                self._starting_user = self._parser.get_digest_explore_users().pop(0)[1:]
-                
-            print "next starting user:",self._starting_user
-            return True
+            if self._starting_user in self._digested_users:
+               return self._next() 
+            else:    
+                return True
         else:
             self._starting_user = None
-            print "no more users to digest"
+            #print "no more users to digest"
             return False
         
     def do_digest_digestion(self):
@@ -175,6 +185,7 @@ class NewsMeDigestTweeter(object):
         self._oauth_api = None
         
         self._oauth_init()
+        self._tweeted_articles = []
     
     def _oauth_init(self):
         self._oauth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
@@ -184,8 +195,14 @@ class NewsMeDigestTweeter(object):
     def tweet_from_digestion(self,digest_articles):
         
         for article in digest_articles:
-            status_text = "%s %s via @newsme" % (article[1],article[0])
-            print status_text
+            
+            if article[0] not in self._tweeted_articles:
+                status_text = "%s %s via @newsdotme" % (article[1],article[0])
+                print status_text
+                logging.info(status_text)
+                self._tweeted_articles.append(article[0])
+            else:
+                logging.warn("skipping article: %s" % article[0] )
             
             #try:
             #    self._oauth_api.update_status(status=status_text,source="twixmit")
@@ -194,7 +211,7 @@ class NewsMeDigestTweeter(object):
 
 
 def run_digestion():
-    digester = NewsMeDigester(crawl_depth=1)
+    digester = NewsMeDigester(crawl_depth=100)
     digester.do_digest_digestion()
     
     tweeter = NewsMeDigestTweeter()
@@ -205,10 +222,11 @@ def run_digestion():
         tweeter.tweet_from_digestion(digester.get_parser_digest_articles())
 
 if IS_GAE:
-    application = webapp.WSGIApplication([('/tasks/dnewsmedigestion/', NewsmeDigestionHandler)], debug=True)
     class NewsmeDigestionHandler(webapp.RequestHandler):
         def get(self): 
             run_digestion()
+            
+    application = webapp.WSGIApplication([('/tasks/newsmedigestion/', NewsmeDigestionHandler)], debug=True)
 
 def main():
     if IS_GAE:

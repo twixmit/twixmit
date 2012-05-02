@@ -2,3 +2,7 @@ cron:
 - description: daily mix job
   url: /tasks/dailymix/
   schedule: every day 00:01
+  
+- description: daily news.me digestion
+  url: /tasks/newsmedigestion/
+  schedule: every day 06:00
