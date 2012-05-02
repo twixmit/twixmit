@@ -225,7 +225,7 @@ class NewsMeDigestTweeter(object):
 
 def run_digestion():
     tweet_counter = 0
-    digester = NewsMeDigester(crawl_depth=1)
+    digester = NewsMeDigester(crawl_depth=10)
     digester.do_digest_digestion()
     
     tweeter = NewsMeDigestTweeter()
