@@ -258,7 +258,8 @@ class NewsMeDigestTweeter(object):
 def run_digestion():
     tweet_counter = 0
     digester = NewsMeDigester(crawl_depth=10)
-    tweeter = NewsMeDigestTweeter(debug=True)
+    # we dont tweet while we test
+    tweeter = NewsMeDigestTweeter(debug=False)
     
     while digester.next():
         digester.do_digest_digestion()
