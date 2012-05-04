@@ -32,16 +32,22 @@ IS_GAE = True
 try:
     from google.appengine.ext import webapp
     from google.appengine.ext.webapp import util
+    #from google.appengine.ext import db
+    
+    #class NewsMeDigestionStory(db.Model):
+    #    digest_story_link = db.Link(required=True)
+    #    digest_story_title = db.StringProperty(required=True)
+    #    digest_user = db.StringProperty(required=True)
+    #    digest_date_string = db.StringProperty(required=True)
+    #    created = db.DateTimeProperty(auto_now_add=True)
+    #    updated = db.DateTimeProperty(auto_now=True)
+    
 except Exception, exception:
+    logging.getLogger().setLevel("INFO")
     IS_GAE = False 
 
-#class NewsMeHTTPRedirectHandler(urllib2.HTTPRedirectHandler):
-#    http_error_301 = http_error_303 = http_error_307 = http_error_302
-#    
-#    def http_error_302(self, req, fp, code, msg, headers):
-#        print "Cookie Manip Right Here"
-#        return urllib2.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
-
+# Digest HTML from user 
+# Generate map of articles and list of other users to explore
 class NewsMeDigestParser(HTMLParser):    
     def __init__(self):
         #div#id="digest-date", date="May 01, 2012"
@@ -49,7 +55,7 @@ class NewsMeDigestParser(HTMLParser):
         #a.class="story-link", data-ga-event-action="Top Stories", href=<link>, data=<link title>
         self._digest_articles = {}
         #a.class="explore-digest-link" href=/<user>
-        self._digest_explore_users = []
+        self._digest_explore_users = {}
         
         self._tag_states = {"_digest_date" :False, "_digest_articles" : False, "_digest_explore_users" : False}
         
@@ -74,7 +80,7 @@ class NewsMeDigestParser(HTMLParser):
                 
                 if explore_digest_link_found == True:
                     #print "digest story link found:", href_in_attrs.strip()
-                    self._digest_explore_users.append(href_in_attrs.strip())
+                    self._digest_explore_users[href_in_attrs.strip()] = True
                     explore_digest_link_found = False
                 elif store_link_found == True:
                     self.handle_start_tag_attr_story_link(href_in_attrs)
@@ -89,7 +95,7 @@ class NewsMeDigestParser(HTMLParser):
                 explore_digest_link_found = True
             elif tag == 'a' and attr[0] == 'class' and attr[1] == 'explore-digest-link' and href_in_attrs != None:
                 #print "digest explore user found:", href_in_attrs.strip()
-                self._digest_explore_users.append(href_in_attrs.strip())
+                self._digest_explore_users[href_in_attrs.strip()] = True
                 explore_digest_link_found = False
             
             # story links
@@ -135,20 +141,23 @@ class NewsMeDigestParser(HTMLParser):
             
             
 class NewsMeDigester(object):
-    def __init__(self,starting_user="timoreilly",crawl_depth=1):
-        self._starting_user = starting_user
+    def __init__(self,digest_explore_seeds=["/timoreilly"],crawl_depth=1):
+        self._starting_user = None
         self._crawl_depth_limit=crawl_depth
         self._crawl_depth_counter = 0
         self._host = "www.news.me"
         self._url = "http://%s/%s"
-        self._parser = None
-        self._digested_users = []
+        
+        self._digested_users = {}
+        self._digest_articles = {}
+        self._digest_explore_users = digest_explore_seeds
     
     def next(self):
-        if len(self._parser.get_digest_explore_users()) > 0 and self._crawl_depth_counter < self._crawl_depth_limit:
-            self._starting_user = self._parser.get_digest_explore_users().pop(0)[1:]
+        
+        if len(self._digest_explore_users ) > 0 and self._crawl_depth_counter < self._crawl_depth_limit:
+            self._starting_user = self._digest_explore_users.pop(0)[1:]
             
-            logging.info("starting user: %s" %self._starting_user)
+            logging.info("starting user: %s" % self._starting_user)
             
             if self._starting_user in self._digested_users:
                 logging.warn("starting is digested: %s" % self._starting_user)
@@ -161,22 +170,26 @@ class NewsMeDigester(object):
         
     def do_digest_digestion(self):
         digest_data = self.get_digest_page()
-        self._parser = NewsMeDigestParser()
+        parser = NewsMeDigestParser()
         if digest_data != None:
-            self._parser.feed(digest_data)
+            parser.feed(digest_data)
+            self._digest_explore_users.extend( parser.get_digest_explore_users().keys() )
+            self._digest_articles = parser.get_digest_articles()
+            self._crawl_depth_counter = self._crawl_depth_counter + 1
+        else:
+            logging.warn("digest data is none for: %s" % self._starting_user)
         
-        self._crawl_depth_counter = self._crawl_depth_counter + 1
         
         logging.info( "self._crawl_depth_counter: %s" % self._crawl_depth_counter)
-        logging.info("self._digested_users: %s" %self._digested_users)
+        logging.info("self._digested_users: %s" % self._digested_users)
         
-        self._digested_users.append(self._starting_user)
+        self._digested_users[self._starting_user] = True
     
     def get_parser_digest_articles(self):
-        return self._parser.get_digest_articles()
+        return self._digest_articles
                 
     def get_digest_page(self):
-        conn = httplib.HTTPConnection(self._host)
+        conn = httplib.HTTPConnection(self._host,timeout=5)
         next_url = self._url % (self._host,self._starting_user)
         
         logging.info("next url: %s" % next_url)
@@ -226,18 +239,14 @@ class NewsMeDigestTweeter(object):
 def run_digestion():
     tweet_counter = 0
     digester = NewsMeDigester(crawl_depth=10)
-    digester.do_digest_digestion()
-    
     tweeter = NewsMeDigestTweeter()
-    tweeter.tweet_from_digestion(digester.get_parser_digest_articles())
-    tweet_counter = tweet_counter + 1
     
     while digester.next():
         digester.do_digest_digestion()
         tweeter.tweet_from_digestion(digester.get_parser_digest_articles())
         tweet_counter = tweet_counter + 1
+        logging.info("tweet counter: %i" % tweet_counter)
         
-    logging.info("tweet counter: %i" % tweet_counter)
 
 if IS_GAE:
     class NewsmeDigestionHandler(webapp.RequestHandler):
