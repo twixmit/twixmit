@@ -47,7 +47,7 @@ class NewsMeDigestParser(HTMLParser):
         #div#id="digest-date", date="May 01, 2012"
         self._digest_date = None 
         #a.class="story-link", data-ga-event-action="Top Stories", href=<link>, data=<link title>
-        self._digest_articles = []
+        self._digest_articles = {}
         #a.class="explore-digest-link" href=/<user>
         self._digest_explore_users = []
         
@@ -101,16 +101,16 @@ class NewsMeDigestParser(HTMLParser):
     
     def handle_start_tag_attr_story_link(self,href_in_attrs):
         try:
-            rec = [urllib.unquote(href_in_attrs.strip().split("url=")[1].split("&")[0]), None]
+            rec = urllib.unquote(href_in_attrs.strip().split("url=")[1].split("&")[0])
         except IndexError,e:
             logging.error(href_in_attrs.strip())
             #raise e
-            rec = [href_in_attrs.strip(), None]
+            rec = href_in_attrs.strip()
             
         #print rec
-        if rec not in self._digest_articles:
-            self._digest_articles.append(rec)
-            self._tag_states["_digest_articles"] = True
+        if not self._digest_articles.has_key(rec):
+            self._digest_articles[rec] = None
+            self._tag_states["_digest_articles"] = rec
         else:
             logging.warn("rec already in list: %s" % rec[0])
         
@@ -128,9 +128,9 @@ class NewsMeDigestParser(HTMLParser):
             #print "digest date data:",data.strip()
             self._digest_date = data.strip()
             self._tag_states["_digest_date"] == False
-        elif self._tag_states["_digest_articles"] == True:
+        elif not self._tag_states["_digest_articles"] == False:
             #print "digest story link date:",data.strip()
-            self._digest_articles[-1][1] = data.strip()
+            self._digest_articles[self._tag_states["_digest_articles"]] = data.strip()
             self._tag_states["_digest_articles"] = False
             
             
@@ -197,7 +197,7 @@ class NewsMeDigestTweeter(object):
         self._oauth_api = None
         
         self._oauth_init()
-        self._tweeted_articles = []
+        self._tweeted_articles = {}
     
     def _oauth_init(self):
         self._oauth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
@@ -206,21 +206,21 @@ class NewsMeDigestTweeter(object):
     
     def tweet_from_digestion(self,digest_articles):
         
-        for article in digest_articles:
+        for k, v in digest_articles.iteritems():
             
-            if article[0] not in self._tweeted_articles:
-                status_text = "%s %s" % (article[1],article[0])
-                #print status_text
+            if not self._tweeted_articles.has_key(k):
+                status_text = "%s %s" % (v,k)
+                print status_text
                 
-                try:
-                    self._oauth_api.update_status(status=status_text,source="twixmit")
-                except TweepError, e:
-                    logging.error("TweepError: %s", e)
+                #try:
+                #    self._oauth_api.update_status(status=status_text,source="twixmit")
+                #except TweepError, e:
+                #    logging.error("TweepError: %s", e)
                 
                 logging.info(status_text)
-                self._tweeted_articles.append(article[0])
+                self._tweeted_articles[k] = v
             else:
-                logging.warn("skipping article: %s" % article[0] )
+                logging.warn("skipping article: %s" % k )
 
 
 def run_digestion():
@@ -242,7 +242,12 @@ def run_digestion():
 if IS_GAE:
     class NewsmeDigestionHandler(webapp.RequestHandler):
         def get(self): 
-            run_digestion()
+            try:
+                run_digestion()
+            except DeadlineExceededError:
+                self.response.clear()
+                self.response.set_status(500)
+                self.response.out.write("This operation could not be completed in time...")
             
     application = webapp.WSGIApplication([('/tasks/newsmedigestion/', NewsmeDigestionHandler)], debug=True)
 
