@@ -141,7 +141,7 @@ class NewsMeDigestParser(HTMLParser):
             
             
 class NewsMeDigester(object):
-    def __init__(self,digest_explore_seeds=["/timoreilly"],crawl_depth=1):
+    def __init__(self,digest_explore_seeds=["/timoreilly","/twixmit","/tepietrondi"],crawl_depth=1):
         self._starting_user = None
         self._crawl_depth_limit=crawl_depth
         self._crawl_depth_counter = 0
@@ -151,6 +151,9 @@ class NewsMeDigester(object):
         self._digested_users = {}
         self._digest_articles = {}
         self._digest_explore_users = digest_explore_seeds
+    
+    def get_current_user(self):
+        return self._starting_user
     
     def next(self):
         
@@ -205,17 +208,33 @@ class NewsMeDigester(object):
             return resp.read()
             
 class NewsMeDigestTweeter(object):
-    def __init__(self):
+    def __init__(self,debug=True):
         self._oauth = None
         self._oauth_api = None
         
         self._oauth_init()
         self._tweeted_articles = {}
+        self._debug = debug
     
     def _oauth_init(self):
         self._oauth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
         self._oauth.set_access_token(social_keys.TWITTER_APP_ACCESS_TOKEN,social_keys.TWITTER_APP_ACCESS_TOKEN_SECRET)
         self._oauth_api = API(self._oauth)
+    
+    def follow_digestion_user(self,digestion_user):
+        
+        status_text = "posting @%s digest articles from @newsdotme" % digestion_user
+        
+        if not self._debug:
+            try:
+                friend = self._oauth_api.create_friendship(digestion_user)
+                self._oauth_api.update_status(status=status_text,source="twixmit")
+            except TweepError, e:
+                logging.error("TweepError: %s", e)
+        
+        
+        logging.info(status_text)
+        logging.info("following: %s" % digestion_user)
     
     def tweet_from_digestion(self,digest_articles):
         
@@ -223,12 +242,12 @@ class NewsMeDigestTweeter(object):
             
             if not self._tweeted_articles.has_key(k):
                 status_text = "%s %s" % (v,k)
-                print status_text
                 
-                #try:
-                #    self._oauth_api.update_status(status=status_text,source="twixmit")
-                #except TweepError, e:
-                #    logging.error("TweepError: %s", e)
+                if not self._debug:
+                    try:
+                        self._oauth_api.update_status(status=status_text,source="twixmit")
+                    except TweepError, e:
+                        logging.error("TweepError: %s", e)
                 
                 logging.info(status_text)
                 self._tweeted_articles[k] = v
@@ -239,11 +258,12 @@ class NewsMeDigestTweeter(object):
 def run_digestion():
     tweet_counter = 0
     digester = NewsMeDigester(crawl_depth=10)
-    tweeter = NewsMeDigestTweeter()
+    tweeter = NewsMeDigestTweeter(debug=True)
     
     while digester.next():
         digester.do_digest_digestion()
         tweeter.tweet_from_digestion(digester.get_parser_digest_articles())
+        tweeter.follow_digestion_user(digester.get_current_user() )
         tweet_counter = tweet_counter + 1
         logging.info("tweet counter: %i" % tweet_counter)
         
