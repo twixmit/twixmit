@@ -32,6 +32,7 @@ IS_GAE = True
 try:
     from google.appengine.ext import webapp
     from google.appengine.ext.webapp import util
+    from google.appengine.runtime import DeadlineExceededError
     #from google.appengine.ext import db
     
     #class NewsMeDigestionStory(db.Model):
