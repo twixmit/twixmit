@@ -33,17 +33,18 @@ try:
     from google.appengine.ext import webapp
     from google.appengine.ext.webapp import util
     from google.appengine.runtime import DeadlineExceededError
-    #from google.appengine.ext import db
+    from google.appengine.ext import db
     
-    #class NewsMeDigestionStory(db.Model):
-    #    digest_story_link = db.Link(required=True)
-    #    digest_story_title = db.StringProperty(required=True)
-    #    digest_user = db.StringProperty(required=True)
-    #    digest_date_string = db.StringProperty(required=True)
-    #    created = db.DateTimeProperty(auto_now_add=True)
-    #    updated = db.DateTimeProperty(auto_now=True)
+    class NewsMeDigestionStoryModel(db.Model):
+        digest_story_title = db.TextProperty(required=True)
+        digest_story_link = db.StringProperty(required=True)
+        digest_user = db.StringProperty(required=True)
+        created = db.DateTimeProperty(auto_now_add=True)
+        updated = db.DateTimeProperty(auto_now=True)
     
 except Exception, exception:
+    #logging.error(exception)
+    #raise exception
     logging.getLogger().setLevel("INFO")
     IS_GAE = False 
 
@@ -193,7 +194,7 @@ class NewsMeDigester(object):
         return self._digest_articles
                 
     def get_digest_page(self):
-        conn = httplib.HTTPConnection(self._host,timeout=5)
+        conn = httplib.HTTPConnection(self._host,timeout=2)
         next_url = self._url % (self._host,self._starting_user)
         
         logging.info("next url: %s" % next_url)
@@ -216,6 +217,8 @@ class NewsMeDigestTweeter(object):
         self._oauth_init()
         self._tweeted_articles = {}
         self._debug = debug
+        
+        self.tweet_counter = 0
     
     def _oauth_init(self):
         self._oauth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
@@ -224,50 +227,93 @@ class NewsMeDigestTweeter(object):
     
     def follow_digestion_user(self,digestion_user):
         
-        status_text = "posting @%s digest articles from @newsdotme" % digestion_user
+        #status_text = "posting @%s digest articles from @newsdotme" % digestion_user
         
         if not self._debug:
             try:
                 friend = self._oauth_api.create_friendship(digestion_user)
-                self._oauth_api.update_status(status=status_text,source="twixmit")
+                #self._oauth_api.update_status(status=status_text,source="twixmit")
             except TweepError, e:
                 logging.error("TweepError: %s", e)
         
         
-        logging.info(status_text)
+        #logging.info(status_text)
         logging.info("following: %s" % digestion_user)
     
-    def tweet_from_digestion(self,digest_articles):
+    def tweet_from_digestion(self,digest_articles, digestion_user):
         
         for k, v in digest_articles.iteritems():
             
             if not self._tweeted_articles.has_key(k):
                 status_text = "%s %s" % (v,k)
                 
-                if not self._debug:
+                model_check = self.check_model_for_tweet(digestion_user,k)
+                
+                logging.info("model check for user and link is %s" % model_check)
+                
+                if not self._debug and not model_check:
                     try:
                         self._oauth_api.update_status(status=status_text,source="twixmit")
+                        self.tweet_counter = self.tweet_counter + 1
                     except TweepError, e:
                         logging.error("TweepError: %s", e)
+                
+                
+                if not model_check:
+                    self.save_tweet_to_model(digestion_user,k,v)
                 
                 logging.info(status_text)
                 self._tweeted_articles[k] = v
             else:
                 logging.warn("skipping article: %s" % k )
+                
+    
+    def check_model_for_tweet(self,user,link):
+        logging.info("checking model for link and user: %s, %s" % (link,user) )
+        if IS_GAE:
+            try:
+                q = NewsMeDigestionStoryModel.all()
+                q.filter("digest_story_link =",link )
+                q.filter("digest_user =",user)
+                config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+                results = q.fetch(1, config=config )
+                
+                #if len(results) > 0: 
+                for r in results:
+                    logging.warn("model contains link and user: %s, %s" % (link,user) )
+                    return True
+                     
+                logging.info("model does not contain link and user: %s, %s" % (link,user) )
+                return False
+                
+            except Exception, exception:
+                logging.error(exception)
+                return False
+        else:
+            logging.info("not IS_GAE, checking model for link and user: %s, %s" % (link,user) )
+            return False 
+    
+    def save_tweet_to_model(self,user,link,title):
+        if IS_GAE:
+            try:
+                newsme_model = NewsMeDigestionStoryModel(digest_story_link=link,digest_story_title=title,digest_user=user)
+                newsme_model.put()
+            except Exception, exception:
+                logging.error("failed to save date to model: %s, %s, %s, %s" % (user,link,title,exception))
+        else:
+            pass 
 
 
 def run_digestion():
-    tweet_counter = 0
-    digester = NewsMeDigester(crawl_depth=10)
-    # we dont tweet while we test
-    tweeter = NewsMeDigestTweeter(debug=False)
+    digester = NewsMeDigester(crawl_depth=1)
+    # we dont tweet while we test, True = No Tweet, False = Tweet
+    tweeter = NewsMeDigestTweeter(debug=True)
     
     while digester.next():
         digester.do_digest_digestion()
-        tweeter.tweet_from_digestion(digester.get_parser_digest_articles())
+        tweeter.tweet_from_digestion(digester.get_parser_digest_articles(), digester.get_current_user() )
         tweeter.follow_digestion_user(digester.get_current_user() )
-        tweet_counter = tweet_counter + 1
-        logging.info("tweet counter: %i" % tweet_counter)
+        logging.info("tweet counter: %i" % tweeter.tweet_counter)
         
 
 if IS_GAE:
