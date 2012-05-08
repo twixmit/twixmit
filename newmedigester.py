@@ -194,7 +194,7 @@ class NewsMeDigester(object):
         return self._digest_articles
                 
     def get_digest_page(self):
-        conn = httplib.HTTPConnection(self._host,timeout=1)
+        conn = httplib.HTTPConnection(self._host,timeout=2)
         next_url = self._url % (self._host,self._starting_user)
         
         logging.info("next url: %s" % next_url)
@@ -207,10 +207,12 @@ class NewsMeDigester(object):
         try:
             resp = conn.getresponse()
         except Exception, exception:
-            resp = None
             logging.error(exception)
         
-        if resp == None or resp.status != 200:
+        if resp == None:
+            logging.error("http connection response timeout for url: %s" % (next_url))
+            return None
+        elif resp.status != 200:
             logging.error("http connection response code is not 200 for url: %s,%i" % (next_url,resp.status))
             return None
         else:
