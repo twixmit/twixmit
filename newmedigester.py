@@ -143,7 +143,7 @@ class NewsMeDigestParser(HTMLParser):
             
             
 class NewsMeDigester(object):
-    def __init__(self,digest_explore_seeds=["/timoreilly","/twixmit","/tepietrondi"],crawl_depth=1):
+    def __init__(self,digest_explore_seeds=["/timoreilly"],crawl_depth=1):
         self._starting_user = None
         self._crawl_depth_limit=crawl_depth
         self._crawl_depth_counter = 0
@@ -194,16 +194,23 @@ class NewsMeDigester(object):
         return self._digest_articles
                 
     def get_digest_page(self):
-        conn = httplib.HTTPConnection(self._host,timeout=2)
+        conn = httplib.HTTPConnection(self._host,timeout=1)
         next_url = self._url % (self._host,self._starting_user)
         
         logging.info("next url: %s" % next_url)
         
         conn.connect()
         conn.request('GET',  next_url)
-        resp = conn.getresponse()
         
-        if resp.status != 200:
+        resp = None
+        
+        try:
+            resp = conn.getresponse()
+        except Exception, exception:
+            resp = None
+            logging.error(exception)
+        
+        if resp == None or resp.status != 200:
             logging.error("http connection response code is not 200 for url: %s,%i" % (next_url,resp.status))
             return None
         else:
@@ -278,7 +285,6 @@ class NewsMeDigestTweeter(object):
                 config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
                 results = q.fetch(1, config=config )
                 
-                #if len(results) > 0: 
                 for r in results:
                     logging.warn("model contains link and user: %s, %s" % (link,user) )
                     return True
