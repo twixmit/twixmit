@@ -194,7 +194,7 @@ class NewsMeDigester(object):
         return self._digest_articles
                 
     def get_digest_page(self):
-        conn = httplib.HTTPConnection(self._host,timeout=2)
+        conn = httplib.HTTPConnection(self._host,timeout=4)
         next_url = self._url % (self._host,self._starting_user)
         
         logging.info("next url: %s" % next_url)
@@ -309,7 +309,7 @@ class NewsMeDigestTweeter(object):
 
 
 def run_digestion():
-    digester = NewsMeDigester(crawl_depth=15)
+    digester = NewsMeDigester(crawl_depth=20)
     # we dont tweet while we test, True = No Tweet, False = Tweet
     tweeter = NewsMeDigestTweeter(debug=False)
     
