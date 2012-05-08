@@ -143,7 +143,7 @@ class NewsMeDigestParser(HTMLParser):
             
             
 class NewsMeDigester(object):
-    def __init__(self,digest_explore_seeds=["/timoreilly"],crawl_depth=1):
+    def __init__(self,digest_explore_seeds=["/timoreilly","/twixmit","/tepietrondi"],crawl_depth=1):
         self._starting_user = None
         self._crawl_depth_limit=crawl_depth
         self._crawl_depth_counter = 0
@@ -235,13 +235,9 @@ class NewsMeDigestTweeter(object):
         self._oauth_api = API(self._oauth)
     
     def follow_digestion_user(self,digestion_user):
-        
-        #status_text = "posting @%s digest articles from @newsdotme" % digestion_user
-        
         if not self._debug:
             try:
                 friend = self._oauth_api.create_friendship(digestion_user)
-                #self._oauth_api.update_status(status=status_text,source="twixmit")
             except TweepError, e:
                 logging.error("TweepError: %s", e)
         
@@ -313,9 +309,9 @@ class NewsMeDigestTweeter(object):
 
 
 def run_digestion():
-    digester = NewsMeDigester(crawl_depth=1)
+    digester = NewsMeDigester(crawl_depth=15)
     # we dont tweet while we test, True = No Tweet, False = Tweet
-    tweeter = NewsMeDigestTweeter(debug=True)
+    tweeter = NewsMeDigestTweeter(debug=False)
     
     while digester.next():
         digester.do_digest_digestion()
