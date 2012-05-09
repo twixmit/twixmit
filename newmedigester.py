@@ -224,7 +224,6 @@ class NewsMeDigestTweeter(object):
         self._oauth_api = None
         
         self._oauth_init()
-        self._tweeted_articles = {}
         self._debug = debug
         
         self.tweet_counter = 0
@@ -249,28 +248,24 @@ class NewsMeDigestTweeter(object):
         
         for k, v in digest_articles.iteritems():
             
-            if not self._tweeted_articles.has_key(k):
-                status_text = "%s %s" % (v,k)
-                
-                model_check = self.check_model_for_tweet(digestion_user,k)
-                
-                logging.info("model check for user and link is %s" % model_check)
-                
-                if not self._debug and not model_check:
-                    try:
-                        self._oauth_api.update_status(status=status_text,source="twixmit")
-                        self.tweet_counter = self.tweet_counter + 1
-                    except TweepError, e:
-                        logging.error("TweepError: %s", e)
-                
-                
-                if not model_check:
-                    self.save_tweet_to_model(digestion_user,k,v)
-                
-                logging.info(status_text)
-                self._tweeted_articles[k] = v
+            status_text = "%s %s" % (v,k)
+            
+            model_check = self.check_model_for_tweet(digestion_user,k)
+            
+            logging.info("model check for user and link is %s" % model_check)
+            
+            if not self._debug and not model_check:
+                try:
+                    self._oauth_api.update_status(status=status_text,source="twixmit")
+                    self.tweet_counter = self.tweet_counter + 1
+                except TweepError, e:
+                    logging.error("TweepError: %s", e)
+            
+            
+            if not model_check:
+                self.save_tweet_to_model(digestion_user,k,v)
             else:
-                logging.warn("skipping article: %s" % k )
+                logging.warn("link was already tweeted: %s" % k)
                 
     
     def check_model_for_tweet(self,user,link):
@@ -279,12 +274,11 @@ class NewsMeDigestTweeter(object):
             try:
                 q = NewsMeDigestionStoryModel.all()
                 q.filter("digest_story_link =",link )
-                q.filter("digest_user =",user)
                 config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
                 results = q.fetch(1, config=config )
                 
                 for r in results:
-                    logging.warn("model contains link and user: %s, %s" % (link,user) )
+                    logging.warn("model contains link: %s" % (link) )
                     return True
                      
                 logging.info("model does not contain link and user: %s, %s" % (link,user) )
@@ -311,7 +305,7 @@ class NewsMeDigestTweeter(object):
 def run_digestion():
     digester = NewsMeDigester(crawl_depth=20)
     # we dont tweet while we test, True = No Tweet, False = Tweet
-    tweeter = NewsMeDigestTweeter(debug=False)
+    tweeter = NewsMeDigestTweeter(debug=True)
     
     while digester.next():
         digester.do_digest_digestion()
@@ -321,6 +315,15 @@ def run_digestion():
         
 
 if IS_GAE:
+    class NewsmeDigestionDeleteHandler(webapp.RequestHandler):
+         def get(self): 
+            q = NewsMeDigestionStoryModel.all()
+            results = q.fetch(1000)
+        
+            for r in results:
+                logging.info("deleting demo entity: %s" % r.key)
+                r.delete()
+    
     class NewsmeDigestionHandler(webapp.RequestHandler):
         def get(self): 
             try:
@@ -328,9 +331,12 @@ if IS_GAE:
             except DeadlineExceededError:
                 self.response.clear()
                 self.response.set_status(500)
-                self.response.out.write("This operation could not be completed in time...")
+                self.response.out.write("This operation could not be completed in time: DeadlineExceededError")
             
-    application = webapp.WSGIApplication([('/tasks/newsmedigestion/', NewsmeDigestionHandler)], debug=True)
+    application = webapp.WSGIApplication( \
+        [('/tasks/newsmedigestion/', NewsmeDigestionHandler),\
+        ('/tasks/newsmedigestiondelete/',NewsmeDigestionDeleteHandler)], \
+        debug=True)
 
 def main():
     if IS_GAE:
