@@ -41,6 +41,23 @@ try:
         digest_user = db.StringProperty(required=True)
         created = db.DateTimeProperty(auto_now_add=True)
         updated = db.DateTimeProperty(auto_now=True)
+        
+    class NewsMeDigestionStoryModelQueries(object):
+    
+        def get_last_created_article_user(self):
+            # SELECT * FROM NewsMeDigestionStoryModel order by created desc limit 1
+            q = NewsMeDigestionStoryModel.all()
+            q.order("-created")
+            
+            config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+            results = q.fetch(1, config=config )
+            
+            last_created_article_user = None
+            
+            for r in results: 
+                last_created_article_user = r.digest_user
+                
+            return last_created_article_user
     
 except Exception, exception:
     #logging.error(exception)
@@ -300,7 +317,20 @@ class NewsMeDigestTweeter(object):
 
 
 def run_digestion():
-    digester = NewsMeDigester(crawl_depth=20)
+
+    last_user_as_seed = None
+
+    if IS_GAE:
+        newsMeQueries = NewsMeDigestionStoryModelQueries()
+        last_user_as_seed = newsMeQueries.get_last_created_article_user()
+    
+    logging.info("last user as see is: %s" % last_user_as_seed )
+    
+    if last_user_as_seed == None:
+        digester = NewsMeDigester(crawl_depth=20)
+    else:
+        digester = NewsMeDigester(digest_explore_seeds=["/%s" % last_user_as_seed],crawl_depth=20)
+    
     # we dont tweet while we test, True = No Tweet, False = Tweet
     tweeter = NewsMeDigestTweeter(debug=True)
     
