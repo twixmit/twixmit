@@ -332,7 +332,7 @@ def run_digestion():
         digester = NewsMeDigester(digest_explore_seeds=["/%s" % last_user_as_seed],crawl_depth=20)
     
     # we dont tweet while we test, True = No Tweet, False = Tweet
-    tweeter = NewsMeDigestTweeter(debug=True)
+    tweeter = NewsMeDigestTweeter(debug=False)
     
     while digester.next():
         digester.do_digest_digestion()
