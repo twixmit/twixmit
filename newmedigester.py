@@ -311,7 +311,8 @@ class NewsMeDigestTweeter(object):
                 newsme_model = NewsMeDigestionStoryModel(digest_story_link=link,digest_story_title=title,digest_user=user)
                 newsme_model.put()
             except Exception, exception:
-                logging.error("failed to save date to model: %s, %s, %s, %s" % (user,link,title,exception))
+                logging.error("failed to save date to model: %s, %s" % (user,link))
+                logging.error(exception)
         else:
             pass 
 
