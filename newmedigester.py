@@ -29,7 +29,7 @@ from tweepy.auth import API
 from tweepy.error import TweepError
 
 IS_GAE = True
-IS_DEBUG = True
+IS_DEBUG = False
 
 try:
     from google.appengine.ext import webapp
@@ -314,9 +314,11 @@ class NewsMeDigestTweeter(object):
     def save_tweet_to_model(self,user,link,title):
         if IS_GAE:
             try:
+                title = unicode(title, errors='replace')
                 newsme_model = NewsMeDigestionStoryModel(digest_story_link=link,digest_story_title=title,digest_user=user)
                 newsme_model.put()
             except Exception, exception:
+                # ERROR    2012-06-02 15:07:56,629 newmedigester.py:321] 'ascii' codec can't decode byte 0xe2 in position 7: ordinal not in range(128)
                 logging.error("failed to save date to model: %s, %s" % (user,link))
                 logging.error(exception)
         else:
@@ -330,15 +332,15 @@ def run_digestion():
 
     if IS_GAE:
         newsMeQueries = NewsMeDigestionStoryModelQueries()
-        last_users_as_seed = newsMeQueries.get_many_article_users()
+        last_users_as_seed = newsMeQueries.get_many_article_users(how_many=300)
         
     if last_user_as_seed == None:
         last_user_as_seed = []
     
-    logging.info("last user as see is: %s" % last_user_as_seed )
-    
     last_user_as_seed.extend(digest_explore_seeds)
     last_user_as_seed = set(last_user_as_seed)
+    
+    logging.info("last users as seed are: %s" % last_users_as_seed )
     
     digester = NewsMeDigester(digest_explore_seeds=digest_explore_seeds,crawl_depth=20)
     
