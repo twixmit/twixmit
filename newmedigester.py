@@ -29,6 +29,8 @@ from tweepy.auth import API
 from tweepy.error import TweepError
 
 IS_GAE = True
+IS_DEBUG = False
+
 try:
     from google.appengine.ext import webapp
     from google.appengine.ext.webapp import util
@@ -126,13 +128,16 @@ class NewsMeDigestParser(HTMLParser):
     
     def handle_start_tag_attr_story_link(self,href_in_attrs):
         try:
+            logging.info("raw href in attr: %s" % href_in_attrs)
             rec = urllib.unquote(href_in_attrs.strip().split("url=")[1].split("&")[0])
+            logging.info("extracted link: %s" % rec)
         except IndexError,e:
-            logging.error(href_in_attrs.strip())
-            #raise e
+            logging.error("index error on raw href in attr: %s" % href_in_attrs.strip())
             rec = href_in_attrs.strip()
             
-        #print rec
+        #rec = rec.rsplit("?")[0]
+        #logging.info("removed url junk link: %s" % rec)
+        
         if not self._digest_articles.has_key(rec):
             self._digest_articles[rec] = None
             self._tag_states["_digest_articles"] = rec
@@ -318,22 +323,26 @@ class NewsMeDigestTweeter(object):
 
 
 def run_digestion():
-
     last_user_as_seed = None
+    # TODO: pull the list from the data store
+    digest_explore_seeds=["/timoreilly","/twixmit","/tepietrondi","/lastgreatthing","/Borthwick","/anildash","/myoung","/davemorin"]
 
     if IS_GAE:
         newsMeQueries = NewsMeDigestionStoryModelQueries()
         last_user_as_seed = newsMeQueries.get_last_created_article_user()
     
     logging.info("last user as see is: %s" % last_user_as_seed )
+    logging.info("last user as see is: %s" % last_user_as_seed )
     
-    if last_user_as_seed == None:
-        digester = NewsMeDigester(crawl_depth=20)
-    else:
-        digester = NewsMeDigester(digest_explore_seeds=["/%s" % last_user_as_seed],crawl_depth=20)
+    if not last_user_as_seed == None:
+        last_user_as_seed = "/%s" % last_user_as_seed
+        if digest_explore_seeds.count(last_user_as_seed) == 0:
+            digest_explore_seeds.append(last_user_as_seed)
+    
+    digester = NewsMeDigester(digest_explore_seeds=digest_explore_seeds,crawl_depth=20)
     
     # we dont tweet while we test, True = No Tweet, False = Tweet
-    tweeter = NewsMeDigestTweeter(debug=False)
+    tweeter = NewsMeDigestTweeter(debug=IS_DEBUG)
     
     while digester.next():
         digester.do_digest_digestion()
