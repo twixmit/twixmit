@@ -29,7 +29,7 @@ from tweepy.auth import API
 from tweepy.error import TweepError
 
 IS_GAE = True
-IS_DEBUG = False
+IS_DEBUG = True
 
 try:
     from google.appengine.ext import webapp
@@ -46,20 +46,21 @@ try:
         
     class NewsMeDigestionStoryModelQueries(object):
     
-        def get_last_created_article_user(self):
+        def get_many_article_users(self,how_many=20):
             # SELECT * FROM NewsMeDigestionStoryModel order by created desc limit 1
             q = NewsMeDigestionStoryModel.all()
             q.order("-created")
             
             config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
-            results = q.fetch(1, config=config )
+            results = q.fetch(how_many, config=config )
             
-            last_created_article_user = None
+            article_users = []
             
             for r in results: 
-                last_created_article_user = r.digest_user
+                article_users.append("/%s" % r.digest_user) 
                 
-            return last_created_article_user
+            return set(article_users)
+        
     
 except Exception, exception:
     #logging.error(exception)
@@ -329,15 +330,15 @@ def run_digestion():
 
     if IS_GAE:
         newsMeQueries = NewsMeDigestionStoryModelQueries()
-        last_user_as_seed = newsMeQueries.get_last_created_article_user()
+        last_users_as_seed = newsMeQueries.get_many_article_users()
+        
+    if last_user_as_seed == None:
+        last_user_as_seed = []
     
     logging.info("last user as see is: %s" % last_user_as_seed )
-    logging.info("last user as see is: %s" % last_user_as_seed )
     
-    if not last_user_as_seed == None:
-        last_user_as_seed = "/%s" % last_user_as_seed
-        if digest_explore_seeds.count(last_user_as_seed) == 0:
-            digest_explore_seeds.append(last_user_as_seed)
+    last_user_as_seed.extend(digest_explore_seeds)
+    last_user_as_seed = set(last_user_as_seed)
     
     digester = NewsMeDigester(digest_explore_seeds=digest_explore_seeds,crawl_depth=20)
     
