@@ -338,7 +338,7 @@ def run_digestion():
         last_user_as_seed = []
     
     last_user_as_seed.extend(digest_explore_seeds)
-    last_user_as_seed = set(last_user_as_seed)
+    last_user_as_seed = list(set(last_user_as_seed))
     
     logging.info("last users as seed are: %s" % last_users_as_seed )
     
