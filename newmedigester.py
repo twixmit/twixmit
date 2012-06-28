@@ -29,7 +29,7 @@ from tweepy.auth import API
 from tweepy.error import TweepError
 
 IS_GAE = True
-IS_DEBUG = False
+IS_DEBUG = True
 
 try:
     from google.appengine.ext import webapp
@@ -258,7 +258,8 @@ class NewsMeDigestTweeter(object):
     
     def follow_digestion_user(self,digestion_user):
         try:
-            friend = self._oauth_api.create_friendship(digestion_user)
+            if self._oauth_api.exists_friendship(digestion_user, 'twixmit') == False:
+                friend = self._oauth_api.create_friendship(digestion_user)
         except TweepError, e:
             logging.error("TweepError: %s", e)
         
