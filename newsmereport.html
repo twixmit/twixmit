@@ -1,0 +1,39 @@
+<!DOCTYPE html> 
+<html> 
+	<head> 
+	<title>twixmit - news.me digest link report</title> 
+	<meta name="viewport" content="width=device-width, initial-scale=1"> 
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
+	<script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+</head> 
+<body> 
+<div data-role="page" id="report">
+	 <div data-role="header">
+        <h1>twixmit - news.me digest link report</h1>
+    </div><!-- /header -->
+
+	<div data-role="content">	
+		<p>last bunch of links...</p>
+		<ul data-role="listview" data-inset="true">
+            {% for link in links %}
+            <li><a href="{{ link.digest_story_link }}">{{ link.digest_story_title }}</a> via {{ link.digest_user }}</li>
+            {% endfor %}
+        </ul>
+
+	</div><!-- /content -->
+    
+     <div data-role="footer">
+        <div data-role="controlgroup" data-type="horizontal" style="text-align:center">
+        <a href="/static/LICENSE.txt" data-role="button" data-rel="external" rel="external">LICENSE</a>
+        <a href="/static/ATTRIBUTION.txt" data-role="button" data-rel="external" rel="external">ATTRIBUTION</a>
+        <a href="mailto:twixmit@gmail.com" data-role="button" data-rel="external" rel="external">EMAIL</a>
+        <a href="https://github.com/twixmit/twixmit" data-role="button" data-rel="external" rel="external">CODE</a>
+        <a href="https://twitter.com/twixmit" data-role="button" data-rel="external" rel="external">TWITTER</a>
+        </div>
+    </div><!-- /footer -->
+    
+</div><!-- /page -->
+
+</body>
+</html>

@@ -21,6 +21,7 @@ import urllib2,urllib
 import sys
 import social_keys
 import logging
+import os
 
 sys.path.insert(0, 'tweepy')
 
@@ -29,12 +30,13 @@ from tweepy.auth import API
 from tweepy.error import TweepError
 
 IS_GAE = True
-IS_DEBUG = False
+IS_DEBUG = True
 
 try:
     from google.appengine.ext import webapp
     from google.appengine.ext.webapp import util
     from google.appengine.runtime import DeadlineExceededError
+    from google.appengine.ext.webapp import template
     from google.appengine.ext import db
     
     class NewsMeDigestionStoryModel(db.Model):
@@ -364,6 +366,19 @@ if IS_GAE:
             for r in results:
                 logging.info("deleting demo entity: %s" % r.key)
                 r.delete()
+                
+    class NewsmeDigestionReportHandler(webapp.RequestHandler):
+        def get(self):
+            _path = os.path.join(os.path.dirname(__file__), 'newsmereport.html')
+            q = NewsMeDigestionStoryModel.all()
+            q.order("-created")
+            
+            config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+            results = q.fetch(100, config=config )
+            _template_values = {}
+            _template_values["links"] = results
+            self.response.out.write(template.render(_path, _template_values))
+        
     
     class NewsmeDigestionHandler(webapp.RequestHandler):
         def get(self): 
@@ -376,7 +391,8 @@ if IS_GAE:
             
     application = webapp.WSGIApplication( \
         [('/tasks/newsmedigestion/', NewsmeDigestionHandler),\
-        ('/tasks/newsmedigestiondelete/',NewsmeDigestionDeleteHandler)], \
+        ('/tasks/newsmedigestiondelete/',NewsmeDigestionDeleteHandler), \
+        ('/newsme/digestreport/',NewsmeDigestionReportHandler)], \
         debug=True)
 
 def main():
