@@ -100,7 +100,7 @@ class StreamsTestsPlain(object):
         self._stream.filter(follow=follow_ids)
     
     def filter(self):
-        self._stream.filter(track=["$AKAM","$EMC","$AMZN","$AAPL","@StockTwits"])
+        self._stream.filter(track=["@newsdotme","@twixmit","@app_engine"])
 
 if IS_GAE:
     class StreamsTestsHandler(webapp.RequestHandler):   
@@ -114,7 +114,7 @@ def main():
     else:
         try:
             r = StreamsTestsPlain()
-            r.filter_follow()
+            r.filter()
         except KeyboardInterrupt:
             pass
 

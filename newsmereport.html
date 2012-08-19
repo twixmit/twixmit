@@ -6,18 +6,27 @@
 	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
 	<script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
 	<script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+	<script src="http://platform.twitter.com/anywhere.js?id=rqYxWQtcMINcYQ7facAyQ&v=1" type="text/javascript"></script> 
 </head> 
 <body> 
 <div data-role="page" id="report">
 	 <div data-role="header">
-        <h1>twixmit - news.me digest link report</h1>
+        <h1>twixmit - news.me digest report</h1>
     </div><!-- /header -->
 
 	<div data-role="content">	
-		<p>last bunch of links...</p>
 		<ul data-role="listview" data-inset="true">
             {% for link in links %}
-            <li><a href="{{ link.digest_story_link }}">{{ link.digest_story_title }}</a> via {{ link.digest_user }}</li>
+            <li>
+                <p class="ui-li-aside ui-li-desc"><strong>{{link.created }}</strong></p>
+                <h3 class="ui-li-heading">
+                <a href="{{ link.digest_story_link }}">{{ link.digest_story_title }}</a>
+                </h3>
+                <p class="ui-li-desc">
+                <strong>via @{{ link.digest_user }}</strong>
+                </p>
+                
+            </li>
             {% endfor %}
         </ul>
 
@@ -34,6 +43,15 @@
     </div><!-- /footer -->
     
 </div><!-- /page -->
-
+<script type="text/javascript">
+$("#home").live("pageinit", function(e) {
+    if(twttr){
+        twttr.anywhere(function (T) {
+            T.linkifyUsers();
+            T.hovercards();
+        });
+    }
+});
+</script>
 </body>
 </html>
