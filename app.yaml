@@ -18,6 +18,10 @@ handlers:
   script: newmedigester.py
   login: admin
   
+- url: /tasks/newsmedigestionaddseed/.*
+  script: newmedigester.py
+  login: admin
+  
 #- url: /tasks/dailymix/.*
 #  script: dailymix.py
 #  login: admin

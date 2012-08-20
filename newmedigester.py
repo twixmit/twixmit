@@ -432,7 +432,16 @@ if IS_GAE:
             for r in results:
                 logging.info("deleting demo entity: %s" % r.key)
                 r.delete()
-                
+    
+    class NewsmeDigestionAddSeedHandler(webapp.RequestHandler):
+         def get(self): 
+            
+            seeder = NewsMeSeeder()
+            seeder.init_seed_model()
+            
+            who = self.request.get("who")
+            seeder.add_to_seeds(who)
+    
     class NewsmeDigestionReportHandler(webapp.RequestHandler):
         def get(self):
             _path = os.path.join(os.path.dirname(__file__), 'newsmereport.html')
@@ -469,6 +478,7 @@ if IS_GAE:
     application = webapp.WSGIApplication( \
         [('/tasks/newsmedigestion/', NewsmeDigestionHandler),\
         ('/tasks/newsmedigestiondelete/',NewsmeDigestionDeleteHandler), \
+        ('/tasks/newsmedigestionaddseed/',NewsmeDigestionAddSeedHandler), \
         ('/newsme/digestreport/',NewsmeDigestionReportHandler), \
         ('/',NewsmeDigestionReportHandler)], \
         debug=True)
