@@ -175,7 +175,7 @@ class NewsMeDigestParser(HTMLParser):
 
 class NewsMeSeeder(object):
     
-    def __init(self):
+    def __init__(self):
         self._static_known_seeds = ["/timoreilly","/twixmit","/tepietrondi","/lastgreatthing","/Borthwick","/anildash","/myoung","/davemorin","/innonate","/ejacqui"]
         
     def init_seed_model(self):
@@ -184,13 +184,13 @@ class NewsMeSeeder(object):
         config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
         result_count = q.count(config=config)
         
-        if not result_count == 0:
+        if result_count == 0:
             try:
                 seed_model = NewsMeDigestionSeedUsers(seeds=self._static_known_seeds)
                 seed_model.put()
             except Exception, exception:
                 # ERROR    2012-06-02 15:07:56,629 newmedigester.py:321] 'ascii' codec can't decode byte 0xe2 in position 7: ordinal not in range(128)
-                logging.error("failed to save date to model: %s, %s" % (user,link))
+                logging.error("failed to save static seeds to model: %s" % (self._static_known_seeds))
                 logging.error(exception)
                 
     def get_seeds(self):
@@ -400,7 +400,11 @@ def run_digestion():
     if last_user_as_seed == None:
         last_user_as_seed = []
     
-    last_user_as_seed.extend(digest_explore_seeds)
+    if not digest_explore_seeds == None:
+        last_user_as_seed.extend(digest_explore_seeds)
+    else:
+        logging.warn("digest_explore_seeds is None, this should never happen!")
+    
     last_user_as_seed = list(set(last_user_as_seed))
     
     seeder.force_set_seeds(last_user_as_seed)
