@@ -31,7 +31,7 @@ from tweepy.auth import API
 from tweepy.error import TweepError
 
 IS_GAE = True
-IS_DEBUG = True
+IS_DEBUG = False
 
 try:
     from google.appengine.ext import webapp
