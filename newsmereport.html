@@ -11,7 +11,9 @@
 <body> 
 <div data-role="page" id="report">
 	 <div data-role="header">
+	    <a href="http://www.news.me/" data-icon="star">news.me</a>
         <h1>twixmit - news.me digest report</h1>
+       <a href="#about" data-rel="dialog" data-icon="info">about</a> 
     </div><!-- /header -->
 
 	<div data-role="content">	
@@ -45,6 +47,16 @@
     </div><!-- /footer -->
     
 </div><!-- /page -->
+
+<div data-role="page" id="about" data-title="twixmit - about">
+    <div data-role="content">	
+    <p>twixmit steals news from news.me digest pages. daily it reads the digest pages of some interesting people,
+    and posts the pages to twitter. the twitter updates don't spam the user's with mentions, but here, we link
+    to where we stole the content from.</p>
+    <p>join news.me for fun if you have twitter. follow twixmit on twitter for the posts.</p>
+    <a href="#" data-rel="back" data-role="back" data-icon="back">back</a> 
+</div>
+
 <script type="text/javascript">
 $("#home").live("pageinit", function(e) {
     if(twttr){

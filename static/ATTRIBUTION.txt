@@ -14,4 +14,4 @@ http://thenounproject.com/noun/disapprove/#icon-No339
 
 "jQuery Mobile" from http://jquerymobile.com
 
-
+"NEWS.ME" from http://www.news.me/
