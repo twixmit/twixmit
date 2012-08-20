@@ -22,6 +22,7 @@ import sys
 import social_keys
 import logging
 import os
+import helpers
 
 sys.path.insert(0, 'tweepy')
 
@@ -30,7 +31,7 @@ from tweepy.auth import API
 from tweepy.error import TweepError
 
 IS_GAE = True
-IS_DEBUG = False
+IS_DEBUG = True
 
 try:
     from google.appengine.ext import webapp
@@ -43,6 +44,11 @@ try:
         digest_story_title = db.TextProperty(required=True)
         digest_story_link = db.StringProperty(required=True)
         digest_user = db.StringProperty(required=True)
+        created = db.DateTimeProperty(auto_now_add=True)
+        updated = db.DateTimeProperty(auto_now=True)
+        
+    class NewsMeDigestionSeedUsers(db.Model):
+        seeds = db.StringListProperty(required=True)
         created = db.DateTimeProperty(auto_now_add=True)
         updated = db.DateTimeProperty(auto_now=True)
         
@@ -166,9 +172,60 @@ class NewsMeDigestParser(HTMLParser):
             self._digest_articles[self._tag_states["_digest_articles"]] = data.strip()
             self._tag_states["_digest_articles"] = False
             
+
+class NewsMeSeeder(object):
+    
+    def __init(self):
+        self._static_known_seeds = ["/timoreilly","/twixmit","/tepietrondi","/lastgreatthing","/Borthwick","/anildash","/myoung","/davemorin","/innonate","/ejacqui"]
+        
+    def init_seed_model(self):
+        q = NewsMeDigestionSeedUsers.all()
+            
+        config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+        result_count = q.count(config=config)
+        
+        if not result_count == 0:
+            try:
+                seed_model = NewsMeDigestionSeedUsers(seeds=self._static_known_seeds)
+                seed_model.put()
+            except Exception, exception:
+                # ERROR    2012-06-02 15:07:56,629 newmedigester.py:321] 'ascii' codec can't decode byte 0xe2 in position 7: ordinal not in range(128)
+                logging.error("failed to save date to model: %s, %s" % (user,link))
+                logging.error(exception)
+                
+    def get_seeds(self):
+        q = NewsMeDigestionSeedUsers.all()
+        
+        config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+        results = q.fetch(1,config=config)
+        
+        for p in results:
+            return p.seeds
+    
+    def add_to_seeds(self,seed):
+        q = NewsMeDigestionSeedUsers.all()
+        
+        config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+        results = q.fetch(1,config=config)
+        
+        for p in results:
+            p.seeds.append(seed)
+            p.seeds = list(set(p.seeds))
+            p.put()
+            
+    def force_set_seeds(self,seeds):
+        q = NewsMeDigestionSeedUsers.all()
+        
+        config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+        results = q.fetch(1,config=config)
+        
+        for p in results:
+            p.seeds = seeds
+            p.put()
+        
             
 class NewsMeDigester(object):
-    def __init__(self,digest_explore_seeds=["/timoreilly","/twixmit","/tepietrondi"],crawl_depth=1):
+    def __init__(self,digest_explore_seeds=["/twixmit"],crawl_depth=1):
         self._starting_user = None
         self._crawl_depth_limit=crawl_depth
         self._crawl_depth_counter = 0
@@ -331,8 +388,11 @@ class NewsMeDigestTweeter(object):
 def run_digestion():
     last_user_as_seed = None
     # TODO: pull the list from the data store
-    digest_explore_seeds=["/timoreilly","/twixmit","/tepietrondi","/lastgreatthing","/Borthwick","/anildash","/myoung","/davemorin"]
-
+    seeder = NewsMeSeeder()
+    seeder.init_seed_model()
+    
+    digest_explore_seeds = seeder.get_seeds()
+    
     if IS_GAE:
         newsMeQueries = NewsMeDigestionStoryModelQueries()
         last_users_as_seed = newsMeQueries.get_many_article_users(how_many=300)
@@ -342,6 +402,8 @@ def run_digestion():
     
     last_user_as_seed.extend(digest_explore_seeds)
     last_user_as_seed = list(set(last_user_as_seed))
+    
+    seeder.force_set_seeds(last_user_as_seed)
     
     logging.info("last users as seed are: %s" % last_users_as_seed )
     
@@ -382,6 +444,12 @@ if IS_GAE:
             _template_values = {}
             _template_values["links"] = results
             _template_values["seeds"] = last_users_as_seed
+            
+            util = helpers.Util()
+            self.response.headers["Expires"] = util.get_expiration_stamp(3600)
+            self.response.headers["Cache-Control: max-age"] = 3600
+            self.response.headers["Cache-Control"] = "public"
+            
             self.response.out.write(template.render(_path, _template_values))
         
     
