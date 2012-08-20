@@ -375,8 +375,13 @@ if IS_GAE:
             
             config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
             results = q.fetch(100, config=config )
+            
+            newsMeQueries = NewsMeDigestionStoryModelQueries()
+            last_users_as_seed = newsMeQueries.get_many_article_users(how_many=300)
+            
             _template_values = {}
             _template_values["links"] = results
+            _template_values["seeds"] = last_users_as_seed
             self.response.out.write(template.render(_path, _template_values))
         
     
@@ -392,7 +397,8 @@ if IS_GAE:
     application = webapp.WSGIApplication( \
         [('/tasks/newsmedigestion/', NewsmeDigestionHandler),\
         ('/tasks/newsmedigestiondelete/',NewsmeDigestionDeleteHandler), \
-        ('/newsme/digestreport/',NewsmeDigestionReportHandler)], \
+        ('/newsme/digestreport/',NewsmeDigestionReportHandler), \
+        ('/',NewsmeDigestionReportHandler)], \
         debug=True)
 
 def main():

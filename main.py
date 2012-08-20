@@ -376,16 +376,17 @@ class MainMobileHandler(MainHandler):
             self.redirect(URL_STATIC_ERROR_DEFAULT)
 
 
-application = webapp.WSGIApplication([('/', MainMobileHandler),
-        ('/callback', CallbackHandler),
-        ('/saveformix',SavePostForMixHandler),
-        ('/getposts',GetPostsHandler),
-         ('/getdemoposts',GetDemoPostsHandler),
-        ],
-     debug=True)
+#application = webapp.WSGIApplication([('/', MainMobileHandler),
+#        ('/callback', CallbackHandler),
+#        ('/saveformix',SavePostForMixHandler),
+#        ('/getposts',GetPostsHandler),
+#         ('/getdemoposts',GetDemoPostsHandler),
+#        ],
+#     debug=True)
 
 def main():
-    util.run_wsgi_app(application)
+    #util.run_wsgi_app(application)
+    pass
 
 
 if __name__ == '__main__':

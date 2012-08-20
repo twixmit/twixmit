@@ -20,7 +20,9 @@
             <li>
                 <p class="ui-li-aside ui-li-desc"><strong>{{link.created }}</strong></p>
                 <h3 class="ui-li-heading">
-                <a href="{{ link.digest_story_link }}">{{ link.digest_story_title }}</a>
+                <a href="{{ link.digest_story_link }}">
+                {{ link.digest_story_title }}
+                </a>
                 </h3>
                 <p class="ui-li-desc">
                 <strong>via @{{ link.digest_user }}</strong>
@@ -29,7 +31,6 @@
             </li>
             {% endfor %}
         </ul>
-
 	</div><!-- /content -->
     
      <div data-role="footer">
@@ -39,6 +40,7 @@
         <a href="mailto:twixmit@gmail.com" data-role="button" data-rel="external" rel="external">EMAIL</a>
         <a href="https://github.com/twixmit/twixmit" data-role="button" data-rel="external" rel="external">CODE</a>
         <a href="https://twitter.com/twixmit" data-role="button" data-rel="external" rel="external">TWITTER</a>
+        <a href="http://www.news.me/twixmit" data-role="button" data-rel="external" rel="external">NEWS.ME</a>
         </div>
     </div><!-- /footer -->
     

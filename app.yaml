@@ -18,9 +18,9 @@ handlers:
   script: newmedigester.py
   login: admin
   
-- url: /tasks/dailymix/.*
-  script: dailymix.py
-  login: admin
+#- url: /tasks/dailymix/.*
+#  script: dailymix.py
+#  login: admin
 #  secure: always
 
 - url: /favicon\.ico
@@ -32,8 +32,7 @@ handlers:
   expiration: "1d"
 
 - url: .*
-  script: main.py
-#  secure: always
+  script: newmedigester.py
 
 # - url: /.*
 #    static_files: static/default_error.html
