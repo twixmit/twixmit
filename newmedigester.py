@@ -25,6 +25,7 @@ import social_keys
 import logging
 import os
 import helpers
+import cache_keys
 
 sys.path.insert(0, 'tweepy')
 
@@ -58,6 +59,11 @@ class NewsMeModelQueries(object):
     
     def _get_db_run_config_eventual(self):
         return db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+
+    def get_many_articles(self,how_many=20):
+        q = NewsMeDigestionStoryModel.all()
+        q.order("-created")
+        results = q.fetch(how_many,config=self._db_run_config)
 
     def get_many_article_users(self,how_many=20):
         q = NewsMeDigestionStoryModel.all()
@@ -376,48 +382,11 @@ class NewsMeDigestTweeter(object):
             logging.error("failed to save date to model: %s, %s" % (user,link))
             logging.error(exception)
         
-def run_digestion():
-    last_user_as_seed = None
-    # TODO: pull the list from the data store
-    seeder = NewsMeSeeder()
-    seeder.init_seed_model()
-    
-    digest_explore_seeds = seeder.get_seeds()
-    
-    newsMeQueries = NewsMeModelQueries()
-    last_users_as_seed = newsMeQueries.get_many_article_users(how_many=300)
-        
-    if last_user_as_seed == None:
-        last_user_as_seed = []
-    
-    if not digest_explore_seeds == None:
-        last_user_as_seed.extend(digest_explore_seeds)
-    else:
-        logging.warn("digest_explore_seeds is None, this should never happen!")
-    
-    last_user_as_seed = list(set(last_user_as_seed))
-    
-    seeder.force_set_seeds(last_user_as_seed)
-    
-    logging.info("last users as seed are: %s" % last_users_as_seed )
-    
-    digester = NewsMeDigester(digest_explore_seeds=last_user_as_seed,crawl_depth=20)
-    
-    # we dont tweet while we test, True = No Tweet, False = Tweet
-    tweeter = NewsMeDigestTweeter(debug=IS_DEBUG)
-    
-    while digester.next():
-        digester.do_digest_digestion()
-        tweeter.tweet_from_digestion(digester.get_parser_digest_articles(), digester.get_current_user() )
-        tweeter.follow_digestion_user(digester.get_current_user() )
-        logging.info("tweet counter: %i" % tweeter.tweet_counter)
-        
-
 
 class NewsmeDigestionDeleteHandler(webapp.RequestHandler):
      def get(self): 
-        q = NewsMeDigestionStoryModel.all()
-        results = q.fetch(1000)
+        model_queries = NewsMeModelQueries()
+        results = model_queries.get_many_articles(1000)
     
         for r in results:
             logging.info("deleting demo entity: %s" % r.key)
@@ -436,16 +405,13 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
     def get(self):
         _path = os.path.join(os.path.dirname(__file__), 'newsmereport.html')
         
-        cache_results = memcache.get("NewsmeDigestionReportHandler_NewsMeDigestionStoryModel_all")
+        cache_results = memcache.get(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES)
         
         if cache_results == None:
-            q = NewsMeDigestionStoryModel.all()
-            q.order("-created")
+            model_queries = NewsMeModelQueries()
+            results = model_queries.get_many_articles(100)
             
-            config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
-            results = q.fetch(100, config=config )
-            
-            memcache.add("NewsmeDigestionReportHandler_NewsMeDigestionStoryModel_all", results, 3600)
+            memcache.add(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES, results, 3600)
             
         else:
             results = cache_results
@@ -462,9 +428,45 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
     
 
 class NewsmeDigestionHandler(webapp.RequestHandler):
+    def run_digestion():
+        last_user_as_seed = None
+        # TODO: pull the list from the data store
+        seeder = NewsMeSeeder()
+        seeder.init_seed_model()
+        
+        digest_explore_seeds = seeder.get_seeds()
+        
+        newsMeQueries = NewsMeModelQueries()
+        last_users_as_seed = newsMeQueries.get_many_article_users(how_many=300)
+            
+        if last_user_as_seed == None:
+            last_user_as_seed = []
+        
+        if not digest_explore_seeds == None:
+            last_user_as_seed.extend(digest_explore_seeds)
+        else:
+            logging.warn("digest_explore_seeds is None, this should never happen!")
+        
+        last_user_as_seed = list(set(last_user_as_seed))
+        
+        seeder.force_set_seeds(last_user_as_seed)
+        
+        logging.info("last users as seed are: %s" % last_users_as_seed )
+        
+        digester = NewsMeDigester(digest_explore_seeds=last_user_as_seed,crawl_depth=20)
+        
+        # we dont tweet while we test, True = No Tweet, False = Tweet
+        tweeter = NewsMeDigestTweeter(debug=IS_DEBUG)
+        
+        while digester.next():
+            digester.do_digest_digestion()
+            tweeter.tweet_from_digestion(digester.get_parser_digest_articles(), digester.get_current_user() )
+            tweeter.follow_digestion_user(digester.get_current_user() )
+            logging.info("tweet counter: %i" % tweeter.tweet_counter)
+    
     def get(self): 
         try:
-            run_digestion()
+            self.run_digestion()
         except DeadlineExceededError:
             self.response.clear()
             self.response.set_status(500)
