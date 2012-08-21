@@ -301,29 +301,39 @@ class NewsMeDigester(object):
         return self._digest_articles
                 
     def get_digest_page(self):
-        conn = httplib.HTTPConnection(self._host,timeout=4)
-        next_url = self._url % (self._host,self._starting_user)
+    
+        cached_html_response_key = cache_keys.NEWSME_DIGESTPAGE_HTML % self._starting_user
+        cached_html_response_value = memcache.get(cached_html_response_key)
         
-        logging.info("next url: %s" % next_url)
-        
-        conn.connect()
-        conn.request('GET',  next_url)
-        
-        resp = None
-        
-        try:
-            resp = conn.getresponse()
-        except Exception, exception:
-            logging.error(exception)
-        
-        if resp == None:
-            logging.error("http connection response timeout for url: %s" % (next_url))
-            return None
-        elif resp.status != 200:
-            logging.error("http connection response code is not 200 for url: %s,%i" % (next_url,resp.status))
-            return None
+        if cached_html_response_value == None:
+    
+            conn = httplib.HTTPConnection(self._host,timeout=4)
+            next_url = self._url % (self._host,self._starting_user)
+            
+            logging.info("next url: %s" % next_url)
+            
+            conn.connect()
+            conn.request('GET',  next_url)
+            
+            resp = None
+            
+            try:
+                resp = conn.getresponse()
+            except Exception, exception:
+                logging.error(exception)
+            
+            if resp == None:
+                logging.error("http connection response timeout for url: %s" % (next_url))
+                return None
+            elif resp.status != 200:
+                logging.error("http connection response code is not 200 for url: %s,%i" % (next_url,resp.status))
+                return None
+            else:
+                response_read =  resp.read()
+                memcache.add(cached_html_response_key, response_read, 21600) # 6 hours
+                return response_read
         else:
-            return resp.read()
+            return cached_html_response_value
             
 class NewsMeDigestTweeter(object):
     def __init__(self,debug=True):

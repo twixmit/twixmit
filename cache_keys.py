@@ -5,3 +5,4 @@ POSTS_DEMO = "posts_demo"
 NOW_TIME = "now_time"
 
 NEWSME_REPORTHANDLER_ALL_STORIES = "NewsmeDigestionReportHandler_NewsMeDigestionStoryModel_all"
+NEWSME_DIGESTPAGE_HTML = "NewsmeDigestionPageHtml_%s"
