@@ -456,7 +456,7 @@ class NewsmeDigestionHandler(webapp.RequestHandler):
         
         logging.info("last users as seed are: %s" % last_users_as_seed )
         
-        digester = NewsMeDigester(digest_explore_seeds=last_user_as_seed,crawl_depth=20)
+        digester = NewsMeDigester(digest_explore_seeds=last_user_as_seed,crawl_depth=10)
         
         # we dont tweet while we test, True = No Tweet, False = Tweet
         tweeter = NewsMeDigestTweeter(debug=IS_DEBUG)
