@@ -22,47 +22,47 @@ class Queries(object):
     def get_db_run_config_eventual(self):
         return db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
 
-    def get_posts_yours_pending(self,user_model,c,day):
-        q = model.SocialPostsForUsers.all()
-        q.filter("day_created =",day)
-                    
-        if not c == None: q.with_cursor(c)
-        q.filter("social_user =",user_model)
-        q.order("created")
+    #def get_posts_yours_pending(self,user_model,c,day):
+    #    q = model.SocialPostsForUsers.all()
+    #    q.filter("day_created =",day)
+    #                
+    #    if not c == None: q.with_cursor(c)
+    #    q.filter("social_user =",user_model)
+    #    q.order("created")
+    #    
+    #    return q
         
-        return q
+    #def get_posts_theirs_pending(self,c,day):
+    #    q = model.SocialPostsForUsers.all()
+    #    q.filter("day_created =",day)
+    #                
+    #    if not c == None: q.with_cursor(c)
+    #    q.order("created")
+    #    
+    #    return q
         
-    def get_posts_theirs_pending(self,c,day):
-        q = model.SocialPostsForUsers.all()
-        q.filter("day_created =",day)
-                    
-        if not c == None: q.with_cursor(c)
-        q.order("created")
+    #def get_posts_yours_resubmitted(self,user_model,day):
+    #    logging.info("your posts resubmitted: %s, %s" % (user_model.user_id,day) )
+    #    q = model.SocialPostsForUsers.all()
+    #    q.filter("day_created !=",day)            
+    #    q.filter("social_user =",user_model)
+    #    q.filter("resubmit =", True)
+    #    #q.order("created")
+    #    
+    #    return q
         
-        return q
+    #def get_posts_theirs_resubmitted(self,user_model,day):
+    #    logging.info("their posts resubmitted: %s, %s" % (user_model.user_id,day) )
+    #    q = model.SocialPostsForUsers.all()
+    #    q.filter("day_created !=",day)
+    #    q.filter("resubmit =", True)
+    #    
+    #    return q                
         
-    def get_posts_yours_resubmitted(self,user_model,day):
-        logging.info("your posts resubmitted: %s, %s" % (user_model.user_id,day) )
-        q = model.SocialPostsForUsers.all()
-        q.filter("day_created !=",day)            
-        q.filter("social_user =",user_model)
-        q.filter("resubmit =", True)
-        #q.order("created")
-        
-        return q
-        
-    def get_posts_theirs_resubmitted(self,user_model,day):
-        logging.info("their posts resubmitted: %s, %s" % (user_model.user_id,day) )
-        q = model.SocialPostsForUsers.all()
-        q.filter("day_created !=",day)
-        q.filter("resubmit =", True)
-        
-        return q                
-        
-    def get_posts_demo(self):
-        q = model.SocialDemoMixesFromFollowing.all()
-        q.order("created")
-        return q                
+    #def get_posts_demo(self):
+    #    q = model.SocialDemoMixesFromFollowing.all()
+    #    q.order("created")
+    #    return q                
         
 
 class Util(object):
@@ -77,28 +77,28 @@ class Util(object):
         
         return expiration.strftime(EXPIRATION_MASK)
 
-    def is_user_good(self):
-        user = users.get_current_user()
-        if user:
-            social_users = model.SocialKeysForUsers.all()
-            social_users.filter("user_id =",user.user_id())
-            user_model = social_users.get()
+    #def is_user_good(self):
+    #    user = users.get_current_user()
+    #    if user:
+    #        social_users = model.SocialKeysForUsers.all()
+    #        social_users.filter("user_id =",user.user_id())
+    #        user_model = social_users.get()
+    #        
+    #        if user_model.access_token_key and user_model.access_token_secret:
+    #            return user_model
+    #        else:
+    #            return None
+    #    else:
+    #        return None
             
-            if user_model.access_token_key and user_model.access_token_secret:
-                return user_model
-            else:
-                return None
-        else:
-            return None
-            
-    def get_twitter_user(self,api,user):
-        twitter_user = memcache.get("twitter_user:%s" % user.user_id())
-                        
-        if twitter_user == None:
-            twitter_user = api.me()
-            memcache.add("twitter_user:%s" % user.user_id(), twitter_user, 60)
-        
-        return twitter_user
+    #def get_twitter_user(self,api,user):
+    #    twitter_user = memcache.get("twitter_user:%s" % user.user_id())
+    #                    
+    #    if twitter_user == None:
+    #        twitter_user = api.me()
+    #        memcache.add("twitter_user:%s" % user.user_id(), twitter_user, 60)
+    #    
+    #    return twitter_user
     
     def get_current_time(self):
         now = memcache.get(cache_keys.NOW_TIME)

@@ -39,6 +39,7 @@ try:
     from google.appengine.runtime import DeadlineExceededError
     from google.appengine.ext.webapp import template
     from google.appengine.ext import db
+    from google.appengine.api import memcache
     
     class NewsMeDigestionStoryModel(db.Model):
         digest_story_title = db.TextProperty(required=True)
@@ -445,18 +446,27 @@ if IS_GAE:
     class NewsmeDigestionReportHandler(webapp.RequestHandler):
         def get(self):
             _path = os.path.join(os.path.dirname(__file__), 'newsmereport.html')
-            q = NewsMeDigestionStoryModel.all()
-            q.order("-created")
             
-            config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
-            results = q.fetch(100, config=config )
+            cache_results = memcache.get("NewsmeDigestionReportHandler_NewsMeDigestionStoryModel_all")
             
-            newsMeQueries = NewsMeDigestionStoryModelQueries()
-            last_users_as_seed = newsMeQueries.get_many_article_users(how_many=300)
+            if cache_results == None:
+                q = NewsMeDigestionStoryModel.all()
+                q.order("-created")
+                
+                config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+                results = q.fetch(100, config=config )
+                
+                memcache.add("NewsmeDigestionReportHandler_NewsMeDigestionStoryModel_all", results, 3600)
+                
+            else:
+                results = cache_results
+            
+            #newsMeQueries = NewsMeDigestionStoryModelQueries()
+            #last_users_as_seed = newsMeQueries.get_many_article_users(how_many=300)
             
             _template_values = {}
             _template_values["links"] = results
-            _template_values["seeds"] = last_users_as_seed
+            #_template_values["seeds"] = last_users_as_seed
             
             util = helpers.Util()
             self.response.headers["Expires"] = util.get_expiration_stamp(3600)

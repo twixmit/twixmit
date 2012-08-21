@@ -21,11 +21,6 @@ handlers:
 - url: /tasks/newsmedigestionaddseed/.*
   script: newmedigester.py
   login: admin
-  
-#- url: /tasks/dailymix/.*
-#  script: dailymix.py
-#  login: admin
-#  secure: always
 
 - url: /favicon\.ico
   static_files: static/noun_project_296_1.png
@@ -37,10 +32,6 @@ handlers:
 
 - url: .*
   script: newmedigester.py
-
-# - url: /.*
-#    static_files: static/default_error.html
-#    upload: static/default_error.html
   
 inbound_services:
 - warmup
