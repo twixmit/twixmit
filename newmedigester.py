@@ -15,6 +15,8 @@
 # limitations under the License.
 #
 
+IS_DEBUG = False
+
 from HTMLParser import HTMLParser
 import httplib
 import urllib2,urllib
@@ -30,52 +32,65 @@ from tweepy.auth import OAuthHandler
 from tweepy.auth import API
 from tweepy.error import TweepError
 
-IS_GAE = True
-IS_DEBUG = False
+from google.appengine.ext import webapp
+from google.appengine.ext.webapp import util
+from google.appengine.runtime import DeadlineExceededError
+from google.appengine.ext.webapp import template
+from google.appengine.ext import db
+from google.appengine.api import memcache
 
-try:
-    from google.appengine.ext import webapp
-    from google.appengine.ext.webapp import util
-    from google.appengine.runtime import DeadlineExceededError
-    from google.appengine.ext.webapp import template
-    from google.appengine.ext import db
-    from google.appengine.api import memcache
+class NewsMeDigestionStoryModel(db.Model):
+    digest_story_title = db.TextProperty(required=True)
+    digest_story_link = db.StringProperty(required=True)
+    digest_user = db.StringProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+    updated = db.DateTimeProperty(auto_now=True)
     
-    class NewsMeDigestionStoryModel(db.Model):
-        digest_story_title = db.TextProperty(required=True)
-        digest_story_link = db.StringProperty(required=True)
-        digest_user = db.StringProperty(required=True)
-        created = db.DateTimeProperty(auto_now_add=True)
-        updated = db.DateTimeProperty(auto_now=True)
-        
-    class NewsMeDigestionSeedUsers(db.Model):
-        seeds = db.StringListProperty(required=True)
-        created = db.DateTimeProperty(auto_now_add=True)
-        updated = db.DateTimeProperty(auto_now=True)
-        
-    class NewsMeDigestionStoryModelQueries(object):
+class NewsMeDigestionSeedUsers(db.Model):
+    seeds = db.StringListProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+    updated = db.DateTimeProperty(auto_now=True)
     
-        def get_many_article_users(self,how_many=20):
-            # SELECT * FROM NewsMeDigestionStoryModel order by created desc limit 1
+class NewsMeModelQueries(object):
+    
+    def __init__(self):
+        self._db_run_config = self.get_db_run_config_eventual()
+    
+    def _get_db_run_config_eventual(self):
+        return db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+
+    def get_many_article_users(self,how_many=20):
+        q = NewsMeDigestionStoryModel.all()
+        q.order("-created")
+        
+        results = q.fetch(how_many, config=self._db_run_config )
+        
+        article_users = []
+        
+        for r in results: 
+            article_users.append("/%s" % r.digest_user) 
+            
+        return set(article_users)
+        
+    def check_model_for_tweet(self,user,link):
+        logging.info("checking model for link and user: %s, %s" % (link,user) )
+        try:
             q = NewsMeDigestionStoryModel.all()
-            q.order("-created")
+            q.filter("digest_story_link =",link )
             
-            config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
-            results = q.fetch(how_many, config=config )
+            results = q.fetch(1, config=self._db_run_config )
             
-            article_users = []
+            for r in results:
+                logging.warn("model contains link: %s" % (link) )
+                return True
+                 
+            logging.info("model does not contain link and user: %s, %s" % (link,user) )
+            return False
             
-            for r in results: 
-                article_users.append("/%s" % r.digest_user) 
-                
-            return set(article_users)
-        
+        except Exception, exception:
+            logging.error(exception)
+            return False
     
-except Exception, exception:
-    #logging.error(exception)
-    #raise exception
-    logging.getLogger().setLevel("INFO")
-    IS_GAE = False 
 
 # Digest HTML from user 
 # Generate map of articles and list of other users to explore
@@ -310,6 +325,8 @@ class NewsMeDigestTweeter(object):
         self._debug = debug
         
         self.tweet_counter = 0
+        
+        self._model_queries = NewsMeModelQueries()
     
     def _oauth_init(self):
         self._oauth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
@@ -331,7 +348,7 @@ class NewsMeDigestTweeter(object):
             
             status_text = "%s %s" % (v,k)
             
-            model_check = self.check_model_for_tweet(digestion_user,k)
+            model_check = self._model_queries.check_model_for_tweet(digestion_user,k)
             
             logging.info("model check for user and link is %s" % model_check)
             
@@ -347,45 +364,18 @@ class NewsMeDigestTweeter(object):
                 self.save_tweet_to_model(digestion_user,k,v)
             else:
                 logging.warn("link was already tweeted: %s" % k)
-                
-    
-    def check_model_for_tweet(self,user,link):
-        logging.info("checking model for link and user: %s, %s" % (link,user) )
-        if IS_GAE:
-            try:
-                q = NewsMeDigestionStoryModel.all()
-                q.filter("digest_story_link =",link )
-                config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
-                results = q.fetch(1, config=config )
-                
-                for r in results:
-                    logging.warn("model contains link: %s" % (link) )
-                    return True
-                     
-                logging.info("model does not contain link and user: %s, %s" % (link,user) )
-                return False
-                
-            except Exception, exception:
-                logging.error(exception)
-                return False
-        else:
-            logging.info("not IS_GAE, checking model for link and user: %s, %s" % (link,user) )
-            return False 
+                    
     
     def save_tweet_to_model(self,user,link,title):
-        if IS_GAE:
-            try:
-                title = unicode(title, errors='replace')
-                newsme_model = NewsMeDigestionStoryModel(digest_story_link=link,digest_story_title=title,digest_user=user)
-                newsme_model.put()
-            except Exception, exception:
-                # ERROR    2012-06-02 15:07:56,629 newmedigester.py:321] 'ascii' codec can't decode byte 0xe2 in position 7: ordinal not in range(128)
-                logging.error("failed to save date to model: %s, %s" % (user,link))
-                logging.error(exception)
-        else:
-            pass 
-
-
+        try:
+            title = unicode(title, errors='replace')
+            newsme_model = NewsMeDigestionStoryModel(digest_story_link=link,digest_story_title=title,digest_user=user)
+            newsme_model.put()
+        except Exception, exception:
+            # ERROR    2012-06-02 15:07:56,629 newmedigester.py:321] 'ascii' codec can't decode byte 0xe2 in position 7: ordinal not in range(128)
+            logging.error("failed to save date to model: %s, %s" % (user,link))
+            logging.error(exception)
+        
 def run_digestion():
     last_user_as_seed = None
     # TODO: pull the list from the data store
@@ -394,9 +384,8 @@ def run_digestion():
     
     digest_explore_seeds = seeder.get_seeds()
     
-    if IS_GAE:
-        newsMeQueries = NewsMeDigestionStoryModelQueries()
-        last_users_as_seed = newsMeQueries.get_many_article_users(how_many=300)
+    newsMeQueries = NewsMeModelQueries()
+    last_users_as_seed = newsMeQueries.get_many_article_users(how_many=300)
         
     if last_user_as_seed == None:
         last_user_as_seed = []
@@ -424,80 +413,73 @@ def run_digestion():
         logging.info("tweet counter: %i" % tweeter.tweet_counter)
         
 
-if IS_GAE:
-    class NewsmeDigestionDeleteHandler(webapp.RequestHandler):
-         def get(self): 
+
+class NewsmeDigestionDeleteHandler(webapp.RequestHandler):
+     def get(self): 
+        q = NewsMeDigestionStoryModel.all()
+        results = q.fetch(1000)
+    
+        for r in results:
+            logging.info("deleting demo entity: %s" % r.key)
+            r.delete()
+
+class NewsmeDigestionAddSeedHandler(webapp.RequestHandler):
+     def get(self): 
+        
+        seeder = NewsMeSeeder()
+        seeder.init_seed_model()
+        
+        who = self.request.get("who")
+        seeder.add_to_seeds(who)
+
+class NewsmeDigestionReportHandler(webapp.RequestHandler):
+    def get(self):
+        _path = os.path.join(os.path.dirname(__file__), 'newsmereport.html')
+        
+        cache_results = memcache.get("NewsmeDigestionReportHandler_NewsMeDigestionStoryModel_all")
+        
+        if cache_results == None:
             q = NewsMeDigestionStoryModel.all()
-            results = q.fetch(1000)
+            q.order("-created")
+            
+            config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+            results = q.fetch(100, config=config )
+            
+            memcache.add("NewsmeDigestionReportHandler_NewsMeDigestionStoryModel_all", results, 3600)
+            
+        else:
+            results = cache_results
         
-            for r in results:
-                logging.info("deleting demo entity: %s" % r.key)
-                r.delete()
-    
-    class NewsmeDigestionAddSeedHandler(webapp.RequestHandler):
-         def get(self): 
-            
-            seeder = NewsMeSeeder()
-            seeder.init_seed_model()
-            
-            who = self.request.get("who")
-            seeder.add_to_seeds(who)
-    
-    class NewsmeDigestionReportHandler(webapp.RequestHandler):
-        def get(self):
-            _path = os.path.join(os.path.dirname(__file__), 'newsmereport.html')
-            
-            cache_results = memcache.get("NewsmeDigestionReportHandler_NewsMeDigestionStoryModel_all")
-            
-            if cache_results == None:
-                q = NewsMeDigestionStoryModel.all()
-                q.order("-created")
-                
-                config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
-                results = q.fetch(100, config=config )
-                
-                memcache.add("NewsmeDigestionReportHandler_NewsMeDigestionStoryModel_all", results, 3600)
-                
-            else:
-                results = cache_results
-            
-            #newsMeQueries = NewsMeDigestionStoryModelQueries()
-            #last_users_as_seed = newsMeQueries.get_many_article_users(how_many=300)
-            
-            _template_values = {}
-            _template_values["links"] = results
-            #_template_values["seeds"] = last_users_as_seed
-            
-            util = helpers.Util()
-            self.response.headers["Expires"] = util.get_expiration_stamp(3600)
-            self.response.headers["Cache-Control: max-age"] = 3600
-            self.response.headers["Cache-Control"] = "public"
-            
-            self.response.out.write(template.render(_path, _template_values))
+        _template_values = {}
+        _template_values["links"] = results
         
+        util = helpers.Util()
+        self.response.headers["Expires"] = util.get_expiration_stamp(3600)
+        self.response.headers["Cache-Control: max-age"] = 3600
+        self.response.headers["Cache-Control"] = "public"
+        
+        self.response.out.write(template.render(_path, _template_values))
     
-    class NewsmeDigestionHandler(webapp.RequestHandler):
-        def get(self): 
-            try:
-                run_digestion()
-            except DeadlineExceededError:
-                self.response.clear()
-                self.response.set_status(500)
-                self.response.out.write("This operation could not be completed in time: DeadlineExceededError")
-            
-    application = webapp.WSGIApplication( \
-        [('/tasks/newsmedigestion/', NewsmeDigestionHandler),\
-        ('/tasks/newsmedigestiondelete/',NewsmeDigestionDeleteHandler), \
-        ('/tasks/newsmedigestionaddseed/',NewsmeDigestionAddSeedHandler), \
-        ('/newsme/digestreport/',NewsmeDigestionReportHandler), \
-        ('/',NewsmeDigestionReportHandler)], \
-        debug=True)
+
+class NewsmeDigestionHandler(webapp.RequestHandler):
+    def get(self): 
+        try:
+            run_digestion()
+        except DeadlineExceededError:
+            self.response.clear()
+            self.response.set_status(500)
+            self.response.out.write("This operation could not be completed in time: DeadlineExceededError")
+        
+application = webapp.WSGIApplication( \
+    [('/tasks/newsmedigestion/', NewsmeDigestionHandler),\
+    ('/tasks/newsmedigestiondelete/',NewsmeDigestionDeleteHandler), \
+    ('/tasks/newsmedigestionaddseed/',NewsmeDigestionAddSeedHandler), \
+    ('/newsme/digestreport/',NewsmeDigestionReportHandler), \
+    ('/',NewsmeDigestionReportHandler)], \
+    debug=True)
 
 def main():
-    if IS_GAE:
-        util.run_wsgi_app(application)
-    else: 
-        run_digestion()
+    util.run_wsgi_app(application)
     
 if __name__ == '__main__':
     main()
