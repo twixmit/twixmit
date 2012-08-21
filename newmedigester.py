@@ -55,7 +55,7 @@ class NewsMeDigestionSeedUsers(db.Model):
 class NewsMeModelQueries(object):
     
     def __init__(self):
-        self._db_run_config = self.get_db_run_config_eventual()
+        self._db_run_config = self._get_db_run_config_eventual()
     
     def _get_db_run_config_eventual(self):
         return db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
@@ -63,7 +63,10 @@ class NewsMeModelQueries(object):
     def get_many_articles(self,how_many=20):
         q = NewsMeDigestionStoryModel.all()
         q.order("-created")
+        
         results = q.fetch(how_many,config=self._db_run_config)
+        
+        return results
 
     def get_many_article_users(self,how_many=20):
         q = NewsMeDigestionStoryModel.all()
@@ -428,16 +431,16 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
     
 
 class NewsmeDigestionHandler(webapp.RequestHandler):
-    def run_digestion():
+    def run_digestion(self):
         last_user_as_seed = None
-        # TODO: pull the list from the data store
+        
         seeder = NewsMeSeeder()
         seeder.init_seed_model()
         
         digest_explore_seeds = seeder.get_seeds()
         
         newsMeQueries = NewsMeModelQueries()
-        last_users_as_seed = newsMeQueries.get_many_article_users(how_many=300)
+        last_users_as_seed = newsMeQueries.get_many_article_users(how_many=500)
             
         if last_user_as_seed == None:
             last_user_as_seed = []

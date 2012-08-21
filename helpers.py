@@ -3,7 +3,6 @@ from google.appengine.api import memcache
 from google.appengine.api import users
 from google.appengine.ext import db
 
-import model
 import datetime,time
 import cache_keys
 import logging
@@ -135,13 +134,13 @@ class Util(object):
         for_show = datetime.datetime(dt.year, dt.month, dt.day, dt.hour,dt.minute)
         return for_show
     
-    def get_next_mix_runtime(self):
-    
-        dt = self.get_current_time()
-        
-        one_day = datetime.timedelta(days=1)
-        tomorrow = dt + one_day
-        
-        run_time = datetime.datetime(tomorrow.year, tomorrow.month, tomorrow.day, hour=0,minute=1)
-        
-        return run_time
+    #def get_next_mix_runtime(self):
+    #
+    #    dt = self.get_current_time()
+    #    
+    #    one_day = datetime.timedelta(days=1)
+    #    tomorrow = dt + one_day
+    #    
+    #    run_time = datetime.datetime(tomorrow.year, tomorrow.month, tomorrow.day, hour=0,minute=1)
+    #    
+    #    return run_time
