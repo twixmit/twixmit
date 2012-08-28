@@ -421,13 +421,16 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
     def get(self):
         _path = os.path.join(os.path.dirname(__file__), 'newsmereport.html')
         
+        util = helpers.Util()
+        seconds_to_cache = util.get_report_http_time_left()
+        
         cache_results = memcache.get(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES)
         
         if cache_results == None:
             model_queries = NewsMeModelQueries()
             results = model_queries.get_many_articles(100)
             
-            memcache.add(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES, results, cache_keys.NEWSME_MEMECACHE_ALL_STORIES)
+            memcache.add(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES, results, seconds_to_cache)
             
         else:
             results = cache_results
@@ -435,8 +438,7 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
         _template_values = {}
         _template_values["links"] = results
         
-        util = helpers.Util()
-        seconds_to_cache = util.get_report_http_time_left()
+        
         self.response.headers["Expires"] = util.get_expiration_stamp(seconds_to_cache)
         self.response.headers["Cache-Control: max-age"] = seconds_to_cache
         self.response.headers["Cache-Control"] = "public"
