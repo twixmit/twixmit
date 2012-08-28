@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-IS_DEBUG = True
+IS_DEBUG = False
 
 from HTMLParser import HTMLParser
 import httplib
