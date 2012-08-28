@@ -75,57 +75,23 @@ class Util(object):
         EXPIRATION_MASK = "%a, %d %b %Y %H:%M:%S %Z"
         
         return expiration.strftime(EXPIRATION_MASK)
-
-    #def is_user_good(self):
-    #    user = users.get_current_user()
-    #    if user:
-    #        social_users = model.SocialKeysForUsers.all()
-    #        social_users.filter("user_id =",user.user_id())
-    #        user_model = social_users.get()
-    #        
-    #        if user_model.access_token_key and user_model.access_token_secret:
-    #            return user_model
-    #        else:
-    #            return None
-    #    else:
-    #        return None
-            
-    #def get_twitter_user(self,api,user):
-    #    twitter_user = memcache.get("twitter_user:%s" % user.user_id())
-    #                    
-    #    if twitter_user == None:
-    #        twitter_user = api.me()
-    #        memcache.add("twitter_user:%s" % user.user_id(), twitter_user, 60)
-    #    
-    #    return twitter_user
     
     def get_current_time(self):
-        now = memcache.get(cache_keys.NOW_TIME)
-        
-        if now == None:
-            now = datetime.datetime.fromtimestamp(time.time())
-            memcache.add(cache_keys.NOW_TIME, now, 10)
-            
+        now = datetime.datetime.fromtimestamp(time.time())
+        now = now + datetime.timedelta(hours=1)
         return now
     
     def get_todays_start(self):
         
-        day_start = memcache.get(cache_keys.POSTS_DAY_START)
-        
-        if day_start == None:
-            dt = self.get_current_time()
-            day_start = datetime.datetime(dt.year, dt.month, dt.day, hour=0,minute=0)
-            memcache.add(cache_keys.POSTS_DAY_START, day_start, 60)
+        dt = self.get_current_time()
+        day_start = datetime.datetime(dt.year, dt.month, dt.day, hour=0,minute=0)
         
         return day_start
         
     def get_todays_stop(self):
-        day_stop = memcache.get(cache_keys.POSTS_DAY_STOP)
         
-        if day_stop == None:
-            dt = self.get_current_time()
-            day_stop = datetime.datetime(dt.year, dt.month, dt.day, hour=23,minute=59,second=59,microsecond=999999)
-            memcache.add(cache_keys.POSTS_DAY_START, day_stop, 60)
+        dt = self.get_current_time()
+        day_stop = datetime.datetime(dt.year, dt.month, dt.day, hour=23,minute=59,second=59,microsecond=999999)
         
         return day_stop
     
@@ -133,6 +99,45 @@ class Util(object):
         dt = self.get_current_time()
         for_show = datetime.datetime(dt.year, dt.month, dt.day, dt.hour,dt.minute)
         return for_show
+        
+
+    def get_time_left_in_day(self):
+        dt = self.get_current_time()
+        ds = self.get_todays_stop()
+        
+        return ds - dt
+        
+    def get_report_http_time_left(self):
+
+        dt = self.get_current_time()
+        
+        logging.warn("dt=%s" % dt)
+        
+        hours_left = dt.hour % cache_keys.NEWSME_DIGEST_CRON_CYCLE 
+        
+        logging.info("hours_left=%s" % hours_left)
+        
+        hour_of_last = dt.hour - hours_left
+        
+        logging.info("hour_of_last=%s" % hour_of_last)
+        
+        hour_of_next  = hour_of_last + cache_keys.NEWSME_DIGEST_CRON_CYCLE 
+        
+        logging.info("hour_of_next=%s" % hour_of_next)
+        
+        next_time_time = datetime.datetime(dt.year, dt.month, dt.day, hour=hour_of_next,minute=0)
+        
+        logging.info("next_time_time=%s" % next_time_time)
+        
+        next_time_different = next_time_time - dt
+        
+        logging.info("next_time_different=%s" % next_time_different)
+        
+        seconds_to_cache = next_time_different.seconds
+        
+        logging.info("seconds_to_cache=%s" % seconds_to_cache)
+        
+        return seconds_to_cache
     
     #def get_next_mix_runtime(self):
     #

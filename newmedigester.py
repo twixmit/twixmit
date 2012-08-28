@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-IS_DEBUG = False
+IS_DEBUG = True
 
 from HTMLParser import HTMLParser
 import httplib
@@ -260,7 +260,8 @@ class NewsMeDigester(object):
         self._digested_users = {}
         self._digest_articles = {}
         self._digest_explore_users = digest_explore_seeds
-    
+        self._utils = helpers.Util()
+        
     def get_current_user(self):
         return self._starting_user
     
@@ -330,7 +331,9 @@ class NewsMeDigester(object):
                 return None
             else:
                 response_read =  resp.read()
-                memcache.add(cached_html_response_key, response_read, 21600) # 6 hours
+                memecache_digest_response = self._util.get_time_left_in_day().seconds
+                logging.info("memecache_digest_response = %s" % memecache_digest_response)
+                memcache.add(cached_html_response_key, response_read, memecache_digest_response )
                 return response_read
         else:
             return cached_html_response_value
@@ -424,7 +427,7 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
             model_queries = NewsMeModelQueries()
             results = model_queries.get_many_articles(100)
             
-            memcache.add(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES, results, 3600)
+            memcache.add(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES, results, cache_keys.NEWSME_MEMECACHE_ALL_STORIES)
             
         else:
             results = cache_results
@@ -433,8 +436,9 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
         _template_values["links"] = results
         
         util = helpers.Util()
-        self.response.headers["Expires"] = util.get_expiration_stamp(3600)
-        self.response.headers["Cache-Control: max-age"] = 3600
+        seconds_to_cache = util.get_report_http_time_left()
+        self.response.headers["Expires"] = util.get_expiration_stamp(seconds_to_cache)
+        self.response.headers["Cache-Control: max-age"] = seconds_to_cache
         self.response.headers["Cache-Control"] = "public"
         
         self.response.out.write(template.render(_path, _template_values))
