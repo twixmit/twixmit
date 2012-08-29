@@ -123,6 +123,9 @@ class Util(object):
         
         hour_of_next  = hour_of_last + cache_keys.NEWSME_DIGEST_CRON_CYCLE 
         
+        # TODO: ValueError: hour must be in 0..23
+        if hour_of_next == 24: hour_of_next = 0
+        
         logging.info("hour_of_next=%s" % hour_of_next)
         
         next_time_time = datetime.datetime(dt.year, dt.month, dt.day, hour=hour_of_next,minute=0)
