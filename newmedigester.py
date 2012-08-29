@@ -260,7 +260,7 @@ class NewsMeDigester(object):
         self._digested_users = {}
         self._digest_articles = {}
         self._digest_explore_users = digest_explore_seeds
-        self._utils = helpers.Util()
+        # self._utils = helpers.Util()
         
     def get_current_user(self):
         return self._starting_user
@@ -331,9 +331,9 @@ class NewsMeDigester(object):
                 return None
             else:
                 response_read =  resp.read()
-                memecache_digest_response = self._util.get_time_left_in_day().seconds
-                logging.info("memecache_digest_response = %s" % memecache_digest_response)
-                memcache.add(cached_html_response_key, response_read, memecache_digest_response )
+                # memecache_digest_response = self._util.get_time_left_in_day().seconds
+                # logging.info("memecache_digest_response = %s" % memecache_digest_response)
+                memcache.add(cached_html_response_key, response_read, cache_keys.NEWSME_CACHE_DIGEST_RESPONSE )
                 return response_read
         else:
             return cached_html_response_value

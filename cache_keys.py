@@ -10,4 +10,4 @@ NEWSME_DIGESTPAGE_HTML = "NewsmeDigestionPageHtml_%s"
 # runs every 3 hours, but digest pages are the same
 # all day, but we only crawl to a limit, so we cycle
 NEWSME_DIGEST_CRON_CYCLE = 3 # hours
-
+NEWSME_CACHE_DIGEST_RESPONSE = 28800 # 8 hours
