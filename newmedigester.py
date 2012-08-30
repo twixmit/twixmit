@@ -77,6 +77,7 @@ class NewsMeModelQueries(object):
         article_users = []
         
         for r in results: 
+            logging.info("next user: %s" % (r.digest_user) )
             article_users.append("/%s" % r.digest_user) 
             
         return set(article_users)
@@ -463,22 +464,24 @@ class NewsmeDigestionHandler(webapp.RequestHandler):
         
         newsMeQueries = NewsMeModelQueries()
         last_users_as_seed = newsMeQueries.get_many_article_users(how_many=500)
-            
-        if last_user_as_seed == None:
-            last_user_as_seed = []
+        
+        logging.info("last_users_as_seed=%s" % last_users_as_seed)
+        
+        if last_users_as_seed == None:
+            last_users_as_seed = []
         
         if not digest_explore_seeds == None:
-            last_user_as_seed.extend(digest_explore_seeds)
+            last_users_as_seed.extend(digest_explore_seeds)
         else:
             logging.warn("digest_explore_seeds is None, this should never happen!")
         
-        last_user_as_seed = list(set(last_user_as_seed))
+        last_users_as_seed = list(set(last_users_as_seed))
         
-        seeder.force_set_seeds(last_user_as_seed)
+        seeder.force_set_seeds(last_users_as_seed)
         
         logging.info("last users as seed are: %s" % last_users_as_seed )
         
-        digester = NewsMeDigester(digest_explore_seeds=last_user_as_seed,crawl_depth=10)
+        digester = NewsMeDigester(digest_explore_seeds=last_users_as_seed,crawl_depth=10)
         
         # we dont tweet while we test, True = No Tweet, False = Tweet
         tweeter = NewsMeDigestTweeter(debug=IS_DEBUG)
