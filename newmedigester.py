@@ -239,12 +239,18 @@ class NewsMeSeeder(object):
             p.put()
             
     def force_set_seeds(self,seeds):
+        
+        logging.info("passed seeds: %s" % seeds)
+        
         q = NewsMeDigestionSeedUsers.all()
         
         config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
         results = q.fetch(1,config=config)
         
         for p in results:
+            
+            logging.info("result seeds: %s" % p.seeds)
+        
             p.seeds = seeds
             p.put()
         
