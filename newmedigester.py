@@ -58,7 +58,8 @@ class NewsMeModelQueries(object):
         self._db_run_config = self._get_db_run_config_eventual()
     
     def _get_db_run_config_eventual(self):
-        return db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
+        # https://developers.google.com/appengine/docs/python/datastore/queries?hl=en#Data_Consistency
+        return db.create_config(deadline=10, read_policy=db.EVENTUAL_CONSISTENCY)
 
     def get_many_articles(self,how_many=20):
         q = NewsMeDigestionStoryModel.all()
@@ -463,7 +464,7 @@ class NewsmeDigestionHandler(webapp.RequestHandler):
         digest_explore_seeds = seeder.get_seeds()
         
         newsMeQueries = NewsMeModelQueries()
-        last_users_as_seed = newsMeQueries.get_many_article_users(how_many=500)
+        last_users_as_seed = newsMeQueries.get_many_article_users(how_many=5000)
         
         logging.info("last_users_as_seed=%s" % last_users_as_seed)
         logging.info("digest_explore_seeds=%s" % digest_explore_seeds)
