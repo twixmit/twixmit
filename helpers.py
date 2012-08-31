@@ -1,8 +1,4 @@
 
-from google.appengine.api import memcache
-from google.appengine.api import users
-from google.appengine.ext import db
-
 import datetime,time
 import cache_keys
 import logging
@@ -111,7 +107,7 @@ class Util(object):
 
         dt = self.get_current_time()
         
-        logging.warn("dt=%s" % dt)
+        logging.info("dt=%s" % dt)
         
         hours_left = dt.hour % cache_keys.NEWSME_DIGEST_CRON_CYCLE 
         

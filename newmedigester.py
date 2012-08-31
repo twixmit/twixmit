@@ -464,7 +464,7 @@ class NewsmeDigestionHandler(webapp.RequestHandler):
         digest_explore_seeds = seeder.get_seeds()
         
         newsMeQueries = NewsMeModelQueries()
-        last_users_as_seed = newsMeQueries.get_many_article_users(how_many=5000)
+        last_users_as_seed = newsMeQueries.get_many_article_users(how_many=500)
         
         logging.info("last_users_as_seed=%s" % last_users_as_seed)
         logging.info("digest_explore_seeds=%s" % digest_explore_seeds)
