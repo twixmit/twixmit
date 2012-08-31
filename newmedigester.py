@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-IS_DEBUG = True
+IS_DEBUG = False
 
 from HTMLParser import HTMLParser
 import httplib
@@ -318,8 +318,11 @@ class NewsMeDigester(object):
             
             logging.info("next url: %s" % next_url)
             
+            #TODO be a better crawler
+            headers = {'User-Agent' : 'twixmitbot' }
+            
             conn.connect()
-            conn.request('GET',  next_url)
+            conn.request('GET',  next_url, headers)
             
             resp = None
             
