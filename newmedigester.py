@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-IS_DEBUG = False
+IS_DEBUG = True
 
 from HTMLParser import HTMLParser
 import httplib
@@ -69,35 +69,36 @@ class NewsMeModelQueries(object):
         
         return results
 
-    def get_many_article_users(self,how_many=20):
-        q = NewsMeDigestionStoryModel.all()
-        q.order("-created")
-        
-        results = q.fetch(how_many, config=self._db_run_config )
-        
-        article_users = []
-        
-        for r in results: 
-            #logging.info("next user: %s" % (r.digest_user) )
-            article_users.append("/%s" % r.digest_user) 
-            
-        return list(set(article_users))
+    #def get_many_article_users(self,how_many=20):
+    #    q = db.GqlQuery("SELECT digest_user FROM NewsMeDigestionStoryModel ORDER BY CREATED DESC")
+    #    
+    #    results = q.fetch(how_many, config=self._db_run_config )
+    #    
+    #    article_users = []
+    #    
+    #    for r in results: 
+    #        #logging.info("next user: %s" % (r.digest_user) )
+    #        article_users.append("/%s" % r.digest_user) 
+    #        
+    #    return list(set(article_users))
         
     def check_model_for_tweet(self,user,link):
         logging.info("checking model for link and user: %s, %s" % (link,user) )
         try:
-            q = NewsMeDigestionStoryModel.all()
-            q.filter("digest_story_link =",link )
+            #q = NewsMeDigestionStoryModel.all()
+            #q.filter("digest_story_link =",link )
             
-            results = q.fetch(1, config=self._db_run_config )
+            q = db.GqlQuery("SELECT __key__ FROM NewsMeDigestionStoryModel WHERE digest_story_link = :1", link)
             
-            for r in results:
+            results = q.get(config=self._db_run_config )
+            
+            if results == None:
+                logging.info("model does not contain link and user: %s, %s" % (link,user) )
+                return False
+            else:
                 logging.warn("model contains link: %s" % (link) )
                 return True
                  
-            logging.info("model does not contain link and user: %s, %s" % (link,user) )
-            return False
-            
         except Exception, exception:
             logging.error(exception)
             return False
@@ -224,21 +225,19 @@ class NewsMeSeeder(object):
         q = NewsMeDigestionSeedUsers.all()
         
         config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
-        results = q.fetch(1,config=config)
+        results = q.get(config=config)
         
-        for p in results:
-            return p.seeds
+        return results.seeds
     
     def add_to_seeds(self,seed):
         q = NewsMeDigestionSeedUsers.all()
         
         config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
-        results = q.fetch(1,config=config)
+        results = q.get(config=config)
         
-        for p in results:
-            p.seeds.append(seed)
-            p.seeds = list(set(p.seeds))
-            p.put()
+        results.seeds.append(seed)
+        results.seeds = list(set(p.seeds))
+        results.put()
             
     def force_set_seeds(self,seeds):
         
@@ -247,14 +246,12 @@ class NewsMeSeeder(object):
         q = NewsMeDigestionSeedUsers.all()
         
         config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
-        results = q.fetch(1,config=config)
+        results = q.get(config=config)
+                   
+        logging.info("result seeds: %s" % results.seeds)
         
-        for p in results:
-            
-            logging.info("result seeds: %s" % p.seeds)
-        
-            p.seeds = seeds
-            p.put()
+        results.seeds = seeds
+        results.put()
         
             
 class NewsMeDigester(object):
@@ -463,29 +460,29 @@ class NewsmeDigestionHandler(webapp.RequestHandler):
         
         digest_explore_seeds = seeder.get_seeds()
         
-        newsMeQueries = NewsMeModelQueries()
-        last_users_as_seed = newsMeQueries.get_many_article_users(how_many=500)
+        #newsMeQueries = NewsMeModelQueries()
+        #last_users_as_seed = newsMeQueries.get_many_article_users(how_many=500)
         
-        logging.info("last_users_as_seed=%s" % last_users_as_seed)
+        #logging.info("last_users_as_seed=%s" % last_users_as_seed)
         logging.info("digest_explore_seeds=%s" % digest_explore_seeds)
         
-        if last_users_as_seed == None:
-            last_users_as_seed = []
+        #if last_users_as_seed == None:
+        #    last_users_as_seed = []
         
-        if not digest_explore_seeds == None:
-            last_users_as_seed.extend(digest_explore_seeds)
-        else:
-            logging.warn("digest_explore_seeds is None, this should never happen!")
+        #if not digest_explore_seeds == None:
+        #    last_users_as_seed.extend(digest_explore_seeds)
+        #else:
+        #    logging.warn("digest_explore_seeds is None, this should never happen!")
         
-        logging.info("last_users_as_seed=%s" % last_users_as_seed)
+        #logging.info("last_users_as_seed=%s" % last_users_as_seed)
         
-        last_users_as_seed = list(set(last_users_as_seed))
+        #last_users_as_seed = list(set(last_users_as_seed))
         
-        logging.info("last_users_as_seed=%s" % last_users_as_seed)
+        #logging.info("last_users_as_seed=%s" % last_users_as_seed)
         
-        seeder.force_set_seeds(last_users_as_seed)
+        #seeder.force_set_seeds(last_users_as_seed)
         
-        digester = NewsMeDigester(digest_explore_seeds=last_users_as_seed,crawl_depth=10)
+        digester = NewsMeDigester(digest_explore_seeds=digest_explore_seeds,crawl_depth=10)
         
         # we dont tweet while we test, True = No Tweet, False = Tweet
         tweeter = NewsMeDigestTweeter(debug=IS_DEBUG)
