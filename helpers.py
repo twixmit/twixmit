@@ -72,6 +72,14 @@ class Util(object):
         
         return expiration.strftime(EXPIRATION_MASK)
     
+    def get_time_from_string(self,date_string):
+        dt = time.strptime(date_string, "%Y-%m-%d")
+        dt = datetime.datetime(dt.tm_year, dt.tm_mon, dt.tm_mday, hour=0,minute=0)
+        return dt
+        
+    def get_dates_stop(self,dt):
+        return datetime.datetime(dt.year, dt.month, dt.day, hour=23,minute=59,second=59,microsecond=999999)
+    
     def get_current_time(self):
         now = datetime.datetime.fromtimestamp(time.time())
         now = now + datetime.timedelta(hours=1)

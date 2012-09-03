@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-IS_DEBUG = False
+IS_DEBUG = True
 
 from HTMLParser import HTMLParser
 import httplib
@@ -69,18 +69,15 @@ class NewsMeModelQueries(object):
         
         return results
 
-    #def get_many_article_users(self,how_many=20):
-    #    q = db.GqlQuery("SELECT digest_user FROM NewsMeDigestionStoryModel ORDER BY CREATED DESC")
-    #    
-    #    results = q.fetch(how_many, config=self._db_run_config )
-    #    
-    #    article_users = []
-    #    
-    #    for r in results: 
-    #        #logging.info("next user: %s" % (r.digest_user) )
-    #        article_users.append("/%s" % r.digest_user) 
-    #        
-    #    return list(set(article_users))
+    def get_articles_between(self,start,stop):
+        q = NewsMeDigestionStoryModel.all()
+        q.filter("created >= ",start)
+        q.filter("created <= ",stop)
+        q.order("-created")
+        
+        results = q.fetch(limit=1000,config=self._db_run_config)
+        
+        return results
         
     def check_model_for_tweet(self,user,link):
         logging.info("checking model for link and user: %s, %s" % (link,user) )
@@ -429,23 +426,49 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
     def get(self):
         _path = os.path.join(os.path.dirname(__file__), 'newsmereport.html')
         
+        day_start = self.request.get("when") # 2012-09-03
+        
+        logging.info("request day_start=%s" % day_start)
+        
         util = helpers.Util()
+        
+        if day_start == None or day_start == '': 
+            day_start = util.get_todays_start()
+        else: 
+            day_start = util.get_time_from_string(day_start)
+
+        logging.info("today's day start: %s, %s" % (day_start, type(day_start))  )
+            
+        day_stop = util.get_dates_stop(day_start)
+            
+
+        logging.info("today's day stop: %s" % day_stop)
+        
         seconds_to_cache = util.get_report_http_time_left()
         
-        cache_results = memcache.get(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES)
+        cache_results = memcache.get(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES % day_start)
         
         if cache_results == None:
             model_queries = NewsMeModelQueries()
-            results = model_queries.get_many_articles(100)
             
-            memcache.add(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES, results, seconds_to_cache)
+            results = model_queries.get_articles_between(start=day_start,stop=day_stop)
+            
+            memcache.add(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES % day_start, results, seconds_to_cache)
             
         else:
             results = cache_results
         
+        request_host = self.request.headers["Host"]
+        
+        logging.info("request_host = %s" % request_host)
+        
         _template_values = {}
         _template_values["links"] = results
         
+        template_date = day_start.strftime("%Y-%m-%d")
+        
+        _template_values["rel_canonical"] = "http://%s/?when=%s" % (request_host, template_date)
+        _template_values["page_date"] = template_date 
         
         self.response.headers["Expires"] = util.get_expiration_stamp(seconds_to_cache)
         self.response.headers["Cache-Control: max-age"] = seconds_to_cache
@@ -453,6 +476,9 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
         
         self.response.out.write(template.render(_path, _template_values))
     
+
+class NewsmeDigestionSitemap(webapp.RequestHandler):
+    def get(self): pass
 
 class NewsmeDigestionHandler(webapp.RequestHandler):
     def run_digestion(self):

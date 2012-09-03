@@ -1,15 +1,16 @@
 <!DOCTYPE html> 
 <html> 
 	<head> 
-	<title>twixmit - news.me digest link report</title> 
+	<title>twixmit - news.me digest report - {{ page_date }}</title> 
 	<meta name="viewport" content="width=device-width, initial-scale=1"> 
 	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
+	<link rel="canonical" href="{{ rel_canonical }}" />
 </head> 
 <body> 
 <div data-role="page" id="report" data-dom-cache="true">
 	 <div data-role="header">
 	    <a href="http://www.news.me/" data-icon="star">news.me</a>
-        <h1>twixmit - news.me digest report</h1>
+        <h1>twixmit - news.me digest report - {{ page_date }} </h1>
        <a href="#about" data-rel="dialog" data-icon="info">about</a> 
     </div><!-- /header -->
 
