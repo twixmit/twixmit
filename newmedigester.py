@@ -69,6 +69,11 @@ class NewsMeModelQueries(object):
         
         return results
 
+    def get_oldest_link_date(self):
+        q = db.GqlQuery("SELECT created FROM NewsMeDigestionStoryModel ORDER BY created ASC LIMIT 1")
+        results = q.get(config=self._db_run_config )
+        return results.created
+    
     def get_articles_between(self,start,stop):
         q = NewsMeDigestionStoryModel.all()
         q.filter("created >= ",start)
@@ -478,7 +483,34 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
     
 
 class NewsmeDigestionSitemap(webapp.RequestHandler):
-    def get(self): pass
+    def get(self):
+        model_queries = NewsMeModelQueries()
+        oldest_date = model_queries.get_oldest_link_date()
+        
+        util = helpers.Util()
+        today_start = util.get_todays_start()
+        
+        links = []
+        
+        request_host = self.request.headers["Host"]
+        
+        while oldest_date < today_start:
+            template_date = day_start.strftime("%Y-%m-%d")
+        
+            next_link = "http://%s/?when=%s" % (request_host, template_date)
+            
+            links.append(next_link)
+            
+            oldest_date = util.get_next_day(oldest_date)
+            
+        _template_values = {}
+        _template_values["links"] = results
+        
+        _path = os.path.join(os.path.dirname(__file__), 'newsmesitemap.html')    
+        
+        self.response.headers["Content-Type"] = "application/xml"
+        
+        self.response.out.write(template.render(_path, _template_values))
 
 class NewsmeDigestionHandler(webapp.RequestHandler):
     def run_digestion(self):

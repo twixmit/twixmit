@@ -146,6 +146,13 @@ class Util(object):
         
         return seconds_to_cache
     
+    
+    def get_next_day(self,dt):
+        one_day = datetime.timedelta(days=1)
+        tomorrow = dt + one_day
+        
+        return tomorrow
+    
     #def get_next_mix_runtime(self):
     #
     #    dt = self.get_current_time()
