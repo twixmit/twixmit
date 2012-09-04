@@ -27,8 +27,6 @@ import os
 import helpers
 import cache_keys
 
-from xml.sax.saxutils import escape
-
 sys.path.insert(0, 'tweepy')
 
 from tweepy.auth import OAuthHandler
@@ -503,7 +501,7 @@ class NewsmeDigestionSitemap(webapp.RequestHandler):
         while oldest_date < today_start:
             template_date = oldest_date.strftime("%Y-%m-%d")
         
-            next_link = "http://%s/&amp;when=%s" % (request_host, template_date)
+            next_link = "http://%s/?when=%s" % (request_host, template_date)
             
             logging.info("next_link = %s" % next_link)
             
