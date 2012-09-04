@@ -27,6 +27,8 @@ import os
 import helpers
 import cache_keys
 
+from xml.sax.saxutils import escape
+
 sys.path.insert(0, 'tweepy')
 
 from tweepy.auth import OAuthHandler
@@ -487,24 +489,32 @@ class NewsmeDigestionSitemap(webapp.RequestHandler):
         model_queries = NewsMeModelQueries()
         oldest_date = model_queries.get_oldest_link_date()
         
+        logging.info("oldest_date = %s" % oldest_date)
+        
         util = helpers.Util()
         today_start = util.get_todays_start()
+        
+        logging.info("today_start = %s" % today_start)
         
         links = []
         
         request_host = self.request.headers["Host"]
         
         while oldest_date < today_start:
-            template_date = day_start.strftime("%Y-%m-%d")
+            template_date = oldest_date.strftime("%Y-%m-%d")
         
-            next_link = "http://%s/?when=%s" % (request_host, template_date)
+            next_link = "http://%s/&amp;when=%s" % (request_host, template_date)
+            
+            logging.info("next_link = %s" % next_link)
             
             links.append(next_link)
             
             oldest_date = util.get_next_day(oldest_date)
             
+            logging.info("next oldest_date = %s" % oldest_date)
+            
         _template_values = {}
-        _template_values["links"] = results
+        _template_values["links"] = links
         
         _path = os.path.join(os.path.dirname(__file__), 'newsmesitemap.html')    
         
@@ -567,6 +577,7 @@ application = webapp.WSGIApplication( \
     ('/tasks/newsmedigestiondelete/',NewsmeDigestionDeleteHandler), \
     ('/tasks/newsmedigestionaddseed/',NewsmeDigestionAddSeedHandler), \
     ('/newsme/digestreport/',NewsmeDigestionReportHandler), \
+    ('/sitemap.xml',NewsmeDigestionSitemap),\
     ('/',NewsmeDigestionReportHandler)], \
     debug=True)
 
