@@ -445,23 +445,38 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
         logging.info("today's day start: %s, %s" % (day_start, type(day_start))  )
             
         day_stop = util.get_dates_stop(day_start)
-            
 
         logging.info("today's day stop: %s" % day_stop)
         
         seconds_to_cache = util.get_report_http_time_left()
         
-        cache_results = memcache.get(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES % day_start)
+        results = None
         
-        if cache_results == None:
-            model_queries = NewsMeModelQueries()
+        while results == None:
+        
+            cache_results = memcache.get(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES % day_start)
             
-            results = model_queries.get_articles_between(start=day_start,stop=day_stop)
+            if cache_results == None:
+                model_queries = NewsMeModelQueries()
+                
+                results = model_queries.get_articles_between(start=day_start,stop=day_stop)
+                
+                memcache.add(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES % day_start, results, seconds_to_cache)
+                
+            else:
+                results = cache_results
             
-            memcache.add(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES % day_start, results, seconds_to_cache)
+            logging.info("results length = %s" % len(results) )
             
-        else:
-            results = cache_results
+            if len(results) == 0:
+                logging.warn("results length is NOT correct for day start: %s" % day_start)
+                results = None
+                day_start = util.get_yester_day(day_start)
+                day_stop = util.get_dates_stop(day_start)
+            else:
+                logging.info("results length is correct for day start: %s" % day_start)
+
+                
         
         request_host = self.request.headers["Host"]
         

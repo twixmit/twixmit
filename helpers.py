@@ -152,6 +152,12 @@ class Util(object):
         tomorrow = dt + one_day
         
         return tomorrow
+        
+    def get_yester_day(self,dt):
+        one_day = datetime.timedelta(days=1)
+        yester = dt - one_day
+        
+        return yester
     
     #def get_next_mix_runtime(self):
     #
