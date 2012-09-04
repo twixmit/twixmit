@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-IS_DEBUG = True
+IS_DEBUG = False
 
 from HTMLParser import HTMLParser
 import httplib
@@ -513,6 +513,7 @@ class NewsmeDigestionSitemap(webapp.RequestHandler):
             
         _template_values = {}
         _template_values["links"] = links
+        _template_values["home"] = "http://%s/" % request_host
         
         _path = os.path.join(os.path.dirname(__file__), 'newsmesitemap.html')    
         
