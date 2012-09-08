@@ -11,3 +11,4 @@ NEWSME_DIGESTPAGE_HTML = "NewsmeDigestionPageHtml_%s"
 # all day, but we only crawl to a limit, so we cycle
 NEWSME_DIGEST_CRON_CYCLE = 3 # hours
 NEWSME_CACHE_DIGEST_RESPONSE = 28800 # 8 hours
+NEWSME_CACHE_DIGEST_RESPONSE_LONG = 31536000 # 1 Year

@@ -438,8 +438,10 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
         util = helpers.Util()
         
         if day_start == None or day_start == '': 
+            # this is a normal request to the / main page then
             day_start = util.get_todays_start()
         else: 
+            # this is a request to a dated page
             day_start = util.get_time_from_string(day_start)
 
         logging.info("today's day start: %s, %s" % (day_start, type(day_start))  )
@@ -448,16 +450,28 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
 
         logging.info("today's day stop: %s" % day_stop)
         
+        # seconds to cache until the next cron job, this might not matter for "when" pages
         seconds_to_cache = util.get_report_http_time_left()
         
         results = None
         
-        while results == None:
+        failover_limit_max = 10
+        
+        if self.request.get("when") != None and self.request.get("when") != '':
+            # for "when" pages, we don't want to get another day's results
+            failover_limit_max = 1
+        
+        failover_limit_counter = 0
+        
+        model_queries = NewsMeModelQueries()
+        
+        # look for the news results for the current day, if there aren't any
+        # then fail over to the next day within a limit
+        while results == None and failover_limit_counter < failover_limit_max :
         
             cache_results = memcache.get(cache_keys.NEWSME_REPORTHANDLER_ALL_STORIES % day_start)
             
             if cache_results == None:
-                model_queries = NewsMeModelQueries()
                 
                 results = model_queries.get_articles_between(start=day_start,stop=day_stop)
                 
@@ -475,9 +489,11 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
                 day_stop = util.get_dates_stop(day_start)
             else:
                 logging.info("results length is correct for day start: %s" % day_start)
-
                 
-        
+            failover_limit_counter = failover_limit_counter + 1
+            
+            logging.info("failover_limit_counter = %s" % failover_limit_counter)
+
         request_host = self.request.headers["Host"]
         
         logging.info("request_host = %s" % request_host)
@@ -490,9 +506,23 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
         _template_values["rel_canonical"] = "http://%s/?when=%s" % (request_host, template_date)
         _template_values["page_date"] = template_date 
         
-        self.response.headers["Expires"] = util.get_expiration_stamp(seconds_to_cache)
-        self.response.headers["Cache-Control: max-age"] = seconds_to_cache
-        self.response.headers["Cache-Control"] = "public"
+        
+        if self.request.get("when") == None or self.request.get("when") == '':
+            # cache current page until next cron cycle
+            
+            logging.info("response cache in seconds will be: %s" % seconds_to_cache)
+            
+            self.response.headers["Expires"] = util.get_expiration_stamp(seconds_to_cache)
+            self.response.headers["Cache-Control: max-age"] = seconds_to_cache
+            self.response.headers["Cache-Control"] = "public"
+        else:
+            # cache "when" pages for a long time
+            
+            logging.info("response cache in seconds will be: %s" % cache_keys.NEWSME_CACHE_DIGEST_RESPONSE_LONG)
+            
+            self.response.headers["Expires"] = util.get_expiration_stamp(cache_keys.NEWSME_CACHE_DIGEST_RESPONSE_LONG)
+            self.response.headers["Cache-Control: max-age"] = cache_keys.NEWSME_CACHE_DIGEST_RESPONSE_LONG
+            self.response.headers["Cache-Control"] = "public"
         
         self.response.out.write(template.render(_path, _template_values))
     
