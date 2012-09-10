@@ -85,7 +85,7 @@ class Util(object):
         now = now + datetime.timedelta(hours=1)
         return now
     
-    def get_list_of_days(self,when=None,many=10):
+    def get_list_of_days(self,way,when=None,many=10):
         
         logging.info("when = %s" % when)
         logging.info("many = %s" % many)
@@ -106,7 +106,7 @@ class Util(object):
             
             list_of_days.append(template_date)
             
-            when = self.get_next_day(when)
+            when = way(when)
             
             logging.info("next start = %s" % when)
             
