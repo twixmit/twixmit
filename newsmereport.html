@@ -3,6 +3,7 @@
 	<head> 
 	<title>twixmit - news.me digest report - {{ page_date }}</title> 
 	<meta name="viewport" content="width=device-width, initial-scale=1"> 
+	<meta name="description" content="twixmit steals news from news.me digest pages. daily it reads the digest pages of some interesting people, and posts the pages to twitter. the twitter updates don't spam the user's with mentions, but here, we link to where we stole the content from." />
 	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
 	<link rel="canonical" href="{{ rel_canonical }}" />
 </head> 
@@ -11,10 +12,18 @@
 	 <div data-role="header">
 	    <a href="http://www.news.me/" data-icon="star">news.me</a>
         <h1>twixmit - news.me digest report - {{ page_date }} </h1>
-       <a href="#about" data-rel="dialog" data-icon="info">about</a> 
+       <a href="#about" data-rel="dialog" data-icon="info">about</a>
     </div><!-- /header -->
 
 	<div data-role="content">	
+        <label for="select-choice-0" class="select">change date:</label>
+        <select name="select-choice-date" id="select-choice-date" data-iconpos="left" data-native-menu="false">
+            <option value="{{ page_date }}" selected="true">today</option>
+            {% for select_date in date_selection %}
+            <option value="{{ select_date }}">{{ select_date }}</option>
+            {% endfor %}
+        </select>
+		
 		<ul data-role="listview" data-inset="true">
             {% for link in links %}
             <li>
@@ -61,6 +70,12 @@
 <script src="http://platform.twitter.com/anywhere.js?id=rqYxWQtcMINcYQ7facAyQ&v=1" type="text/javascript"></script> 
 <script type="text/javascript">
 $(document).bind("mobileinit", function(){
+    
+    $("select#select-choice-date").bind( "change", function(event, ui) {
+        var selectedDate = $("select#select-choice-date > option:selected").val();
+        window.location = window.location.pathname + "?when=" + selectedDate;
+    });
+    
     if(twttr){
         twttr.anywhere(function (T) {
             T.linkifyUsers();

@@ -442,7 +442,11 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
             day_start = util.get_todays_start()
         else: 
             # this is a request to a dated page
-            day_start = util.get_time_from_string(day_start)
+            try:
+                day_start = util.get_time_from_string(day_start)
+            except ValueError:
+                logging.warn("exception reported getting date from url arguement: %s" % day_start)
+                day_start = util.get_todays_start()
 
         logging.info("today's day start: %s, %s" % (day_start, type(day_start))  )
             
@@ -505,7 +509,7 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
         
         _template_values["rel_canonical"] = "http://%s/?when=%s" % (request_host, template_date)
         _template_values["page_date"] = template_date 
-        
+        _template_values["date_selection"] = []
         
         if self.request.get("when") == None or self.request.get("when") == '':
             # cache current page until next cron cycle
