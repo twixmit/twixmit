@@ -16,11 +16,10 @@
     </div><!-- /header -->
 
 	<div data-role="content">	
-        <label for="select-choice-0" class="select">change date:</label>
+        <label for="select-choice-date" class="select">change date:</label>
         <select name="select-choice-date" id="select-choice-date" data-iconpos="left" data-native-menu="false">
-            <option value="{{ page_date }}" selected="true">today</option>
             {% for select_date in date_selection %}
-            <option value="{{ select_date }}">{{ select_date }}</option>
+            <option value="{{ select_date }}" data-href="when={{ select_date }}">{{ select_date }}</option>
             {% endfor %}
         </select>
 		
@@ -29,7 +28,7 @@
             <li>
                 <p class="ui-li-aside ui-li-desc"><strong>{{link.created }}</strong></p>
                 <h3 class="ui-li-heading">
-                <a href="{{ link.digest_story_link }}">
+                <a href="{{ link.digest_story_link }}" alt="{{ link.digest_story_title }}">
                 {{ link.digest_story_title }}
                 </a>
                 </h3>
@@ -69,12 +68,24 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 <script src="http://platform.twitter.com/anywhere.js?id=rqYxWQtcMINcYQ7facAyQ&v=1" type="text/javascript"></script> 
 <script type="text/javascript">
+
+function doneDateSelection(moveTo){
+    console.log(moveTo);
+    window.location.search = moveTo;
+}
+
+var dfd = $.Deferred();
+dfd.done( [doneDateSelection] );
+
 $(document).bind("mobileinit", function(){
-    
-    $("select#select-choice-date").bind( "change", function(event, ui) {
-        var selectedDate = $("select#select-choice-date > option:selected").val();
-        window.location = window.location.pathname + "?when=" + selectedDate;
+        
+    $("select#select-choice-date").bind( "change", function() {
+        var moveTo = $("select#select-choice-date > option:selected").data("href");
+        console.log(moveTo);
+        
+        dfd.resolve(moveTo);
     });
+
     
     if(twttr){
         twttr.anywhere(function (T) {

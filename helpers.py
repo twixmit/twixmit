@@ -85,6 +85,36 @@ class Util(object):
         now = now + datetime.timedelta(hours=1)
         return now
     
+    def get_list_of_days(self,when=None,many=10):
+        
+        logging.info("when = %s" % when)
+        logging.info("many = %s" % many)
+        
+        counter = 0
+        
+        list_of_days = []
+        
+        if when == None:
+            when = self.get_current_time()
+            
+        logging.info("when = %s" % when)
+            
+        while counter < many:
+            template_date = when.strftime("%Y-%m-%d")
+            
+            logging.info("template_date = %s" % template_date)
+            
+            list_of_days.append(template_date)
+            
+            when = self.get_next_day(when)
+            
+            logging.info("next start = %s" % when)
+            
+            counter = counter + 1
+            
+        logging.info("list of days = %s" % list_of_days)
+        return list_of_days
+    
     def get_todays_start(self):
         
         dt = self.get_current_time()

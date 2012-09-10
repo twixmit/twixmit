@@ -509,7 +509,7 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
         
         _template_values["rel_canonical"] = "http://%s/?when=%s" % (request_host, template_date)
         _template_values["page_date"] = template_date 
-        _template_values["date_selection"] = []
+        _template_values["date_selection"] = util.get_list_of_days()
         
         if self.request.get("when") == None or self.request.get("when") == '':
             # cache current page until next cron cycle
