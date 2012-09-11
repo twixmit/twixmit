@@ -19,7 +19,8 @@
         <label for="select-choice-date" class="select">change date:</label>
         <select name="select-choice-date" id="select-choice-date" data-iconpos="left" data-native-menu="false">
             {% for select_date in date_selection %}
-            <option value="{{ select_date }}" data-href="when={{ select_date }}">{{ select_date }}</option>
+            <option value="{{ select_date }}" data-href="when={{ select_date }}" 
+                {% ifequal select_date page_date %} selected {% endifequal %}>{{ select_date }}</option>
             {% endfor %}
         </select>
 		
