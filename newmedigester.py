@@ -428,26 +428,35 @@ class NewsmeDigestionAddSeedHandler(webapp.RequestHandler):
         seeder.add_to_seeds(who)
 
 class NewsmeDigestionReportHandler(webapp.RequestHandler):
+    
+    def is_request_when_valid(self,parser):
+        if self.request.get("when") == None or self.request.get("when") == '': 
+            return False
+        else:
+            try:
+                parser(self.request.get("when"))
+                return True
+            except ValueError:
+                logging.warn("exception reported getting date from url arguement: %s" % day_start)
+                return False
+    
     def get(self):
-        _path = os.path.join(os.path.dirname(__file__), 'newsmereport.html')
+        
+        util = helpers.Util()  
+        model_queries = NewsMeModelQueries()      
         
         day_start = self.request.get("when") # 2012-09-03
         
-        logging.info("request day_start=%s" % day_start)
+        day_start_valid = self.is_request_when_valid(util.get_time_from_string)
         
-        util = helpers.Util()
+        logging.info("request when = %s" % self.request.get("when"))
         
-        if day_start == None or day_start == '': 
+        if not day_start_valid:
             # this is a normal request to the / main page then
             day_start = util.get_todays_start()
         else: 
-            # this is a request to a dated page
-            try:
-                day_start = util.get_time_from_string(day_start)
-            except ValueError:
-                logging.warn("exception reported getting date from url arguement: %s" % day_start)
-                day_start = util.get_todays_start()
-
+            day_start = util.get_time_from_string(day_start)
+            
         logging.info("today's day start: %s, %s" % (day_start, type(day_start))  )
             
         day_stop = util.get_dates_stop(day_start)
@@ -459,15 +468,8 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
         
         results = None
         
-        failover_limit_max = 10
-        
-        if self.request.get("when") != None and self.request.get("when") != '':
-            # for "when" pages, we don't want to get another day's results
-            failover_limit_max = 1
-        
+        failover_limit_max = 1
         failover_limit_counter = 0
-        
-        model_queries = NewsMeModelQueries()
         
         # look for the news results for the current day, if there aren't any
         # then fail over to the next day within a limit
@@ -498,6 +500,14 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
             
             logging.info("failover_limit_counter = %s" % failover_limit_counter)
 
+        if results == None:
+            logging.warn("never found results for request")
+            if not day_start_valid:
+                day_start = util.get_todays_start()
+            else:
+                day_start = self.request.get("when") # 2012-09-03
+                day_start = util.get_time_from_string(day_start)
+        
         request_host = self.request.headers["Host"]
         
         logging.info("request_host = %s" % request_host)
@@ -536,6 +546,7 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
             self.response.headers["Cache-Control: max-age"] = cache_keys.NEWSME_CACHE_DIGEST_RESPONSE_LONG
             self.response.headers["Cache-Control"] = "public"
         
+        _path = os.path.join(os.path.dirname(__file__), 'newsmereport.html')
         self.response.out.write(template.render(_path, _template_values))
     
 
