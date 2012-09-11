@@ -71,7 +71,6 @@
 <script type="text/javascript">
 
 function doneDateSelection(moveTo){
-    console.log(moveTo);
     window.location.search = moveTo;
 }
 
@@ -82,12 +81,9 @@ $(document).bind("mobileinit", function(){
         
     $("select#select-choice-date").bind( "change", function() {
         var moveTo = $("select#select-choice-date > option:selected").data("href");
-        console.log(moveTo);
-        
         dfd.resolve(moveTo);
     });
 
-    
     if(twttr){
         twttr.anywhere(function (T) {
             T.linkifyUsers();
