@@ -27,7 +27,7 @@ import os
 import helpers
 import cache_keys
 
-sys.path.insert(0, 'tweepy')
+sys.path.insert(0, 'tweepy_submodule')
 
 from tweepy.auth import OAuthHandler
 from tweepy.auth import API
