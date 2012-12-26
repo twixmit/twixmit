@@ -1,25 +1,26 @@
 application: twix-mit
 version: 1
-runtime: python
+runtime: python27
 api_version: 1
+threadsafe: true
 
 default_expiration: "1d"
 
 handlers:
 
 - url: /newsme/digestreport/.*
-  script: newmedigester.py
+  script: newmedigester.app
 
 - url: /tasks/newsmedigestion/.*
-  script: newmedigester.py
+  script: newmedigester.app
   login: admin
   
 - url: /tasks/newsmedigestiondelete/.*
-  script: newmedigester.py
+  script: newmedigester.app
   login: admin
   
 - url: /tasks/newsmedigestionaddseed/.*
-  script: newmedigester.py
+  script: newmedigester.app
   login: admin
 
 - url: /favicon\.ico
@@ -39,10 +40,10 @@ handlers:
   expiration: "1d"
   
 - url: /sitemap\.xml
-  script: newmedigester.py
+  script: newmedigester.app
 
 - url: .*
-  script: newmedigester.py
+  script: newmedigester.app
   
 inbound_services:
 - warmup

@@ -33,7 +33,8 @@ from tweepy.auth import OAuthHandler
 from tweepy.auth import API
 from tweepy.error import TweepError
 
-from google.appengine.ext import webapp
+import webapp2
+#from google.appengine.ext import webapp
 from google.appengine.ext.webapp import util
 from google.appengine.runtime import DeadlineExceededError
 from google.appengine.ext.webapp import template
@@ -412,7 +413,7 @@ class NewsMeDigestTweeter(object):
             logging.error(exception)
         
 
-class NewsmeDigestionDeleteHandler(webapp.RequestHandler):
+class NewsmeDigestionDeleteHandler(webapp2.RequestHandler):
      def get(self): 
         model_queries = NewsMeModelQueries()
         results = model_queries.get_many_articles(1000)
@@ -421,7 +422,7 @@ class NewsmeDigestionDeleteHandler(webapp.RequestHandler):
             logging.info("deleting demo entity: %s" % r.key)
             r.delete()
 
-class NewsmeDigestionAddSeedHandler(webapp.RequestHandler):
+class NewsmeDigestionAddSeedHandler(webapp2.RequestHandler):
      def get(self): 
         
         seeder = NewsMeSeeder()
@@ -430,7 +431,7 @@ class NewsmeDigestionAddSeedHandler(webapp.RequestHandler):
         who = self.request.get("who")
         seeder.add_to_seeds(who)
 
-class NewsmeDigestionReportHandler(webapp.RequestHandler):
+class NewsmeDigestionReportHandler(webapp2.RequestHandler):
     
     def is_request_when_valid(self,parser):
         if self.request.get("when") == None or self.request.get("when") == '': 
@@ -538,7 +539,7 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
             logging.info("response cache in seconds will be: %s" % seconds_to_cache)
             
             self.response.headers["Expires"] = util.get_expiration_stamp(seconds_to_cache)
-            self.response.headers["Cache-Control: max-age"] = seconds_to_cache
+            self.response.headers["Cache-Control: max-age"] = '%s' % seconds_to_cache
             self.response.headers["Cache-Control"] = "public"
         else:
             # cache "when" pages for a long time
@@ -546,14 +547,14 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
             logging.info("response cache in seconds will be: %s" % cache_keys.NEWSME_CACHE_DIGEST_RESPONSE_LONG)
             
             self.response.headers["Expires"] = util.get_expiration_stamp(cache_keys.NEWSME_CACHE_DIGEST_RESPONSE_LONG)
-            self.response.headers["Cache-Control: max-age"] = cache_keys.NEWSME_CACHE_DIGEST_RESPONSE_LONG
+            self.response.headers["Cache-Control: max-age"] = '%s' % cache_keys.NEWSME_CACHE_DIGEST_RESPONSE_LONG
             self.response.headers["Cache-Control"] = "public"
         
         _path = os.path.join(os.path.dirname(__file__), 'newsmereport.html')
         self.response.out.write(template.render(_path, _template_values))
     
 
-class NewsmeDigestionSitemap(webapp.RequestHandler):
+class NewsmeDigestionSitemap(webapp2.RequestHandler):
     def get(self):
         model_queries = NewsMeModelQueries()
         oldest_date = model_queries.get_oldest_link_date()
@@ -592,7 +593,7 @@ class NewsmeDigestionSitemap(webapp.RequestHandler):
         
         self.response.out.write(template.render(_path, _template_values))
 
-class NewsmeDigestionHandler(webapp.RequestHandler):
+class NewsmeDigestionHandler(webapp2.RequestHandler):
     def run_digestion(self):
         last_user_as_seed = None
         
@@ -642,7 +643,7 @@ class NewsmeDigestionHandler(webapp.RequestHandler):
             self.response.set_status(500)
             self.response.out.write("This operation could not be completed in time: DeadlineExceededError")
         
-application = webapp.WSGIApplication( \
+app = webapp2.WSGIApplication( \
     [('/tasks/newsmedigestion/', NewsmeDigestionHandler),\
     ('/tasks/newsmedigestiondelete/',NewsmeDigestionDeleteHandler), \
     ('/tasks/newsmedigestionaddseed/',NewsmeDigestionAddSeedHandler), \
@@ -651,8 +652,8 @@ application = webapp.WSGIApplication( \
     ('/',NewsmeDigestionReportHandler)], \
     debug=True)
 
-def main():
-    util.run_wsgi_app(application)
-    
-if __name__ == '__main__':
-    main()
+#def main():
+#    util.run_wsgi_app(application)
+#    
+#if __name__ == '__main__':
+#    main()
