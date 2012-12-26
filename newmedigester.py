@@ -17,7 +17,7 @@
 
 IS_DEBUG = False
 
-from HTMLParser import HTMLParser
+from HTMLParser import HTMLParser, HTMLParseError
 import httplib
 import urllib2,urllib
 import sys
@@ -292,10 +292,13 @@ class NewsMeDigester(object):
         digest_data = self.get_digest_page()
         parser = NewsMeDigestParser()
         if digest_data != None:
-            parser.feed(digest_data)
-            self._digest_explore_users.extend( parser.get_digest_explore_users().keys() )
-            self._digest_articles = parser.get_digest_articles()
-            self._crawl_depth_counter = self._crawl_depth_counter + 1
+            try:
+                parser.feed(digest_data)
+                self._digest_explore_users.extend( parser.get_digest_explore_users().keys() )
+                self._digest_articles = parser.get_digest_articles()
+                self._crawl_depth_counter = self._crawl_depth_counter + 1
+            except HTMLParseError, err:
+                logging.error("HTMLParseError: %s" % (err) )
         else:
             logging.warn("digest data is none for: %s" % self._starting_user)
         
