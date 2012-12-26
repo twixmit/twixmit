@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-IS_DEBUG = False
+IS_DEBUG = True
 
 from HTMLParser import HTMLParser
 import httplib
@@ -26,6 +26,9 @@ import logging
 import os
 import helpers
 import cache_keys
+
+import newsmemodel
+import newsmesitemap
 
 sys.path.insert(0, 'tweepy')
 
@@ -40,71 +43,6 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext import db
 from google.appengine.api import memcache
 
-class NewsMeDigestionStoryModel(db.Model):
-    digest_story_title = db.TextProperty(required=True)
-    digest_story_link = db.StringProperty(required=True)
-    digest_user = db.StringProperty(required=True)
-    created = db.DateTimeProperty(auto_now_add=True)
-    updated = db.DateTimeProperty(auto_now=True)
-    
-class NewsMeDigestionSeedUsers(db.Model):
-    seeds = db.StringListProperty(required=True)
-    created = db.DateTimeProperty(auto_now_add=True)
-    updated = db.DateTimeProperty(auto_now=True)
-    
-class NewsMeModelQueries(object):
-    
-    def __init__(self):
-        self._db_run_config = self._get_db_run_config_eventual()
-    
-    def _get_db_run_config_eventual(self):
-        # https://developers.google.com/appengine/docs/python/datastore/queries?hl=en#Data_Consistency
-        return db.create_config(deadline=10, read_policy=db.EVENTUAL_CONSISTENCY)
-
-    def get_many_articles(self,how_many=20):
-        q = NewsMeDigestionStoryModel.all()
-        q.order("-created")
-        
-        results = q.fetch(how_many,config=self._db_run_config)
-        
-        return results
-
-    def get_oldest_link_date(self):
-        q = db.GqlQuery("SELECT created FROM NewsMeDigestionStoryModel ORDER BY created ASC LIMIT 1")
-        results = q.get(config=self._db_run_config )
-        return results.created
-    
-    def get_articles_between(self,start,stop):
-        q = NewsMeDigestionStoryModel.all()
-        q.filter("created >= ",start)
-        q.filter("created <= ",stop)
-        q.order("-created")
-        
-        results = q.fetch(limit=1000,config=self._db_run_config)
-        
-        return results
-        
-    def check_model_for_tweet(self,user,link):
-        logging.info("checking model for link and user: %s, %s" % (link,user) )
-        try:
-            #q = NewsMeDigestionStoryModel.all()
-            #q.filter("digest_story_link =",link )
-            
-            q = db.GqlQuery("SELECT __key__ FROM NewsMeDigestionStoryModel WHERE digest_story_link = :1", link)
-            
-            results = q.get(config=self._db_run_config )
-            
-            if results == None:
-                logging.info("model does not contain link and user: %s, %s" % (link,user) )
-                return False
-            else:
-                logging.warn("model contains link: %s" % (link) )
-                return True
-                 
-        except Exception, exception:
-            logging.error(exception)
-            return False
-    
 
 # Digest HTML from user 
 # Generate map of articles and list of other users to explore
@@ -209,14 +147,14 @@ class NewsMeSeeder(object):
         self._static_known_seeds = ["/timoreilly","/twixmit","/tepietrondi","/lastgreatthing","/Borthwick","/anildash","/myoung","/davemorin","/innonate","/ejacqui"]
         
     def init_seed_model(self):
-        q = NewsMeDigestionSeedUsers.all()
+        q = newsmemodel.NewsMeDigestionSeedUsers.all()
             
         config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
         result_count = q.count(config=config)
         
         if result_count == 0:
             try:
-                seed_model = NewsMeDigestionSeedUsers(seeds=self._static_known_seeds)
+                seed_model = newsmemodel.NewsMeDigestionSeedUsers(seeds=self._static_known_seeds)
                 seed_model.put()
             except Exception, exception:
                 # ERROR    2012-06-02 15:07:56,629 newmedigester.py:321] 'ascii' codec can't decode byte 0xe2 in position 7: ordinal not in range(128)
@@ -224,7 +162,7 @@ class NewsMeSeeder(object):
                 logging.error(exception)
                 
     def get_seeds(self):
-        q = NewsMeDigestionSeedUsers.all()
+        q = newsmemodel.NewsMeDigestionSeedUsers.all()
         
         config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
         results = q.get(config=config)
@@ -232,7 +170,7 @@ class NewsMeSeeder(object):
         return results.seeds
     
     def add_to_seeds(self,seed):
-        q = NewsMeDigestionSeedUsers.all()
+        q = newsmemodel.NewsMeDigestionSeedUsers.all()
         
         config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
         results = q.get(config=config)
@@ -245,7 +183,7 @@ class NewsMeSeeder(object):
         
         logging.info("passed seeds: %s" % seeds)
         
-        q = NewsMeDigestionSeedUsers.all()
+        q = newsmemodel.NewsMeDigestionSeedUsers.all()
         
         config = db.create_config(deadline=5, read_policy=db.EVENTUAL_CONSISTENCY)
         results = q.get(config=config)
@@ -358,7 +296,7 @@ class NewsMeDigestTweeter(object):
         
         self.tweet_counter = 0
         
-        self._model_queries = NewsMeModelQueries()
+        self._model_queries = newsmemodel.NewsMeModelQueries()
     
     def _oauth_init(self):
         self._oauth = OAuthHandler(social_keys.TWITTER_CONSUMER_KEY, social_keys.TWITTER_CONSUMER_SECRET)
@@ -401,7 +339,7 @@ class NewsMeDigestTweeter(object):
     def save_tweet_to_model(self,user,link,title):
         try:
             title = unicode(title, errors='replace')
-            newsme_model = NewsMeDigestionStoryModel(digest_story_link=link,digest_story_title=title,digest_user=user)
+            newsme_model = newsmemodel.NewsMeDigestionStoryModel(digest_story_link=link,digest_story_title=title,digest_user=user)
             newsme_model.put()
         except Exception, exception:
             # ERROR    2012-06-02 15:07:56,629 newmedigester.py:321] 'ascii' codec can't decode byte 0xe2 in position 7: ordinal not in range(128)
@@ -411,7 +349,7 @@ class NewsMeDigestTweeter(object):
 
 class NewsmeDigestionDeleteHandler(webapp.RequestHandler):
      def get(self): 
-        model_queries = NewsMeModelQueries()
+        model_queries = newsmemodel.NewsMeModelQueries()
         results = model_queries.get_many_articles(1000)
     
         for r in results:
@@ -443,7 +381,7 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
     def get(self):
         
         util = helpers.Util()  
-        model_queries = NewsMeModelQueries()      
+        model_queries = newsmemodel.NewsMeModelQueries()      
         
         day_start = self.request.get("when") # 2012-09-03
         
@@ -550,44 +488,6 @@ class NewsmeDigestionReportHandler(webapp.RequestHandler):
         self.response.out.write(template.render(_path, _template_values))
     
 
-class NewsmeDigestionSitemap(webapp.RequestHandler):
-    def get(self):
-        model_queries = NewsMeModelQueries()
-        oldest_date = model_queries.get_oldest_link_date()
-        
-        logging.info("oldest_date = %s" % oldest_date)
-        
-        util = helpers.Util()
-        today_start = util.get_todays_start()
-        
-        logging.info("today_start = %s" % today_start)
-        
-        links = []
-        
-        request_host = self.request.headers["Host"]
-        
-        while oldest_date < today_start:
-            template_date = oldest_date.strftime("%Y-%m-%d")
-        
-            next_link = "http://%s/?when=%s" % (request_host, template_date)
-            
-            logging.info("next_link = %s" % next_link)
-            
-            links.append(next_link)
-            
-            oldest_date = util.get_next_day(oldest_date)
-            
-            logging.info("next oldest_date = %s" % oldest_date)
-            
-        _template_values = {}
-        _template_values["links"] = links
-        _template_values["home"] = "http://%s/" % request_host
-        
-        _path = os.path.join(os.path.dirname(__file__), 'newsmesitemap.html')    
-        
-        self.response.headers["Content-Type"] = "application/xml"
-        
-        self.response.out.write(template.render(_path, _template_values))
 
 class NewsmeDigestionHandler(webapp.RequestHandler):
     def run_digestion(self):
@@ -644,7 +544,7 @@ application = webapp.WSGIApplication( \
     ('/tasks/newsmedigestiondelete/',NewsmeDigestionDeleteHandler), \
     ('/tasks/newsmedigestionaddseed/',NewsmeDigestionAddSeedHandler), \
     ('/newsme/digestreport/',NewsmeDigestionReportHandler), \
-    ('/sitemap.xml',NewsmeDigestionSitemap),\
+    ('/sitemap.xml',newsmesitemap.NewsmeDigestionSitemap),\
     ('/',NewsmeDigestionReportHandler)], \
     debug=True)
 
