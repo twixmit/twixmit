@@ -370,13 +370,13 @@ class NewsMeDigestTweeter(object):
         self._oauth_api = API(self._oauth)
     
     def follow_digestion_user(self,digestion_user):
-        try:
-            if self._oauth_api.exists_friendship(digestion_user, 'twixmit') == False:
-                friend = self._oauth_api.create_friendship(digestion_user)
-        except TweepError, e:
-            logging.error("TweepError: %s", e)
-        
-        logging.info("following: %s" % digestion_user)
+	pass        
+	#try:
+        #    if self._oauth_api.exists_friendship(digestion_user, 'twixmit') == False:
+        #        friend = self._oauth_api.create_friendship(digestion_user)
+        #except TweepError, e:
+        #    logging.error("TweepError: %s", e)
+        #logging.info("following: %s" % digestion_user)
     
     def tweet_from_digestion(self,digest_articles, digestion_user):
         
